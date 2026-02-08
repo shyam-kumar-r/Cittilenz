@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cittilenz_db
+    username: postgres
+    password: "@Shyam123"
+    driver-class-name: org.postgresql.Driver
+
+jpa:
+  hibernate:
+    ddl-auto: update
+  database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: shyamkumar71521@gmail.com
+    password: wynabpxkzgjevrmh
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+file:
+  storage:
+    location: ./uploads
+
+ai:
+  service:
+    base-url: http://localhost:8000
