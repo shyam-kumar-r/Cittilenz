@@ -4,6 +4,9 @@ import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.enums.IssueStatus;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
 import com.civic_reporting.cittilenz.enums.UserRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 
@@ -48,13 +51,14 @@ public interface IssueQueryService {
     // 🚀 NEW PRODUCTION FILTER ENGINE
     // ========================
 
-    List<Issue> filterIssues(
+    org.springframework.data.domain.Page<Issue> filterIssues(
             Integer wardId,
             Integer departmentId,
             Integer reportedBy,
             IssueStatus status,
             UserRole role,
             Integer userWardId,
-            Integer userDepartmentId
+            Integer userDepartmentId,
+            org.springframework.data.domain.Pageable pageable
     );
 }

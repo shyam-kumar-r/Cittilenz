@@ -12,6 +12,13 @@ import com.civic_reporting.cittilenz.repository.IssueRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.IssueQueryService;
 import com.civic_reporting.cittilenz.specification.IssueSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import org.springframework.stereotype.Service;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
@@ -20,6 +27,9 @@ import java.util.List;
 
 @Service
 public class IssueQueryServiceImpl implements IssueQueryService {
+	
+	private static final Logger log =
+	        LoggerFactory.getLogger(IssueQueryServiceImpl.class);
 
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
@@ -188,22 +198,23 @@ public class IssueQueryServiceImpl implements IssueQueryService {
     }
     
     @Override
-    public List<Issue> filterIssues(
+    public Page<Issue> filterIssues(
             Integer wardId,
             Integer departmentId,
             Integer reportedBy,
             IssueStatus status,
             UserRole role,
             Integer userWardId,
-            Integer userDepartmentId
+            Integer userDepartmentId,
+            Pageable pageable
     ) {
-
-        Integer effectiveWardId = wardId;
-        Integer effectiveDepartmentId = departmentId;
 
         // ======================================
         // 🔒 ROLE ENFORCEMENT (STRICT VALIDATION)
         // ======================================
+
+        Integer effectiveWardId = wardId;
+        Integer effectiveDepartmentId = departmentId;
 
         if (role == UserRole.OFFICIAL) {
 
@@ -222,23 +233,55 @@ public class IssueQueryServiceImpl implements IssueQueryService {
             }
 
             effectiveWardId = userWardId;
-            // Department optional
+            // department optional
         }
 
         // ADMIN → no restriction
 
         // ======================================
+        // 🛠 DEFAULT SORTING SAFETY
+        // ======================================
+
+        if (pageable.getSort().isUnsorted()) {
+            pageable = PageRequest.of(
+                    pageable.getPageNumber(),
+                    pageable.getPageSize(),
+                    Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+        }
+
+        // ======================================
         // 🔎 SPECIFICATION BUILD
         // ======================================
 
-        return issueRepository.findAll(
+        Page<Issue> result = issueRepository.findAll(
                 IssueSpecification
                         .isActive()
                         .and(IssueSpecification.hasWard(effectiveWardId))
                         .and(IssueSpecification.hasDepartment(effectiveDepartmentId))
                         .and(IssueSpecification.hasReporter(reportedBy))
-                        .and(IssueSpecification.hasStatus(status))
+                        .and(IssueSpecification.hasStatus(status)),
+                pageable
         );
+
+        // ======================================
+        // 📊 ENTERPRISE AUDIT LOGGING
+        // ======================================
+
+        log.info(
+                "Issue Filter Used | role={} | ward={} | dept={} | reporter={} | status={} | page={} | size={} | totalResults={}",
+                role,
+                effectiveWardId,
+                effectiveDepartmentId,
+                reportedBy,
+                status,
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                result.getTotalElements()
+        );
+
+        return result;
     }
+
 
 }

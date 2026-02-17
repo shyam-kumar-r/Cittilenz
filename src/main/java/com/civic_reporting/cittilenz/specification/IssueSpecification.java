@@ -6,6 +6,21 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class IssueSpecification {
 
+    public static Specification<Issue> filter(
+            Integer wardId,
+            Integer departmentId,
+            Integer reportedBy,
+            IssueStatus status
+    ) {
+
+        return Specification
+                .where(isActive())
+                .and(hasWard(wardId))
+                .and(hasDepartment(departmentId))
+                .and(hasReporter(reportedBy))
+                .and(hasStatus(status));
+    }
+
     public static Specification<Issue> hasWard(Integer wardId) {
         return (root, query, cb) ->
                 wardId == null ? null :
@@ -34,10 +49,4 @@ public class IssueSpecification {
         return (root, query, cb) ->
                 cb.isTrue(root.get("active"));
     }
-
-    // ===============================
-    // 🔥 MASTER DYNAMIC FILTER BUILDER
-    // ===============================
-
-    
 }
