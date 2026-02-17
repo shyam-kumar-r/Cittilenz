@@ -33,4 +33,11 @@ public interface IssueTypeRepository extends JpaRepository<IssueType, Integer> {
     Optional<IssueType> findByIdWithDepartment(Integer id);
 
     boolean existsByNameIgnoreCase(String name);
+    
+    Optional<IssueType> findByName(String name);
+
+    Optional<IssueType> findByIdAndActiveTrue(Integer id);
+    
+    Optional<IssueType> findFirstByActiveTrue();
+
 }

@@ -5,10 +5,17 @@ spring:
     password: "@Shyam123"
     driver-class-name: org.postgresql.Driver
 
-jpa:
-  hibernate:
-    ddl-auto: update
-  database-platform: org.hibernate.dialect.PostgreSQLDialect
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+          
 
   mail:
     host: smtp.gmail.com
@@ -26,3 +33,11 @@ file:
 ai:
   service:
     base-url: http://localhost:8000
+
+geocoding:
+  enabled: true               # master kill switch
+  provider: nominatim
+  rate-limit-per-second: 1    # DO NOT change
+  timeout-ms: 5000
+  user-agent: "cittilenz-backend/1.0 (shyamkumar71521@gmail.com)"
+  base-url: "https://nominatim.openstreetmap.org/reverse"

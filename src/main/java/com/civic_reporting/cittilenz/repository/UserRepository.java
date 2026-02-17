@@ -1,11 +1,15 @@
 package com.civic_reporting.cittilenz.repository;
 
 import com.civic_reporting.cittilenz.entity.User;
+import com.civic_reporting.cittilenz.enums.UserRole;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
+	Optional<User> findByUsernameAndActiveTrue(String username);
 
     Optional<User> findByUsername(String username);
 
@@ -18,5 +22,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByEmail(String email);
     
     boolean existsByMobile(String mobile);
+    
+    Optional<User> findByIdAndActiveTrue(Integer id);
 
+    List<User> findByRoleAndWardIdAndDepartmentIdAndActiveTrue(
+            UserRole role,
+            Integer wardId,
+            Integer departmentId
+    );
+
+    List<User> findByRoleAndWardIdAndActiveTrue(
+            UserRole role,
+            Integer wardId
+    );
 }

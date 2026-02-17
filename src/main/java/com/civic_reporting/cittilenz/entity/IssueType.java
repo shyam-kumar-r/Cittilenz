@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "issue_types")
 public class IssueType {
@@ -22,10 +25,11 @@ public class IssueType {
 
     @Column(name = "sla_hours", nullable = false)
     private Integer slaHours;
-
+    
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private IssuePriority priority;
+
 
     private String description;
 
@@ -48,9 +52,6 @@ public class IssueType {
     public Integer getSlaHours() { return slaHours; }
     public void setSlaHours(Integer slaHours) { this.slaHours = slaHours; }
 
-    public IssuePriority getPriority() { return priority; }
-    public void setPriority(IssuePriority priority) { this.priority = priority; }
-
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
@@ -59,4 +60,14 @@ public class IssueType {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+	public IssuePriority getPriority() {
+		return priority;
+	}
+
+	public void setPriority(IssuePriority priority) {
+		this.priority = priority;
+	}
+
+	
 }

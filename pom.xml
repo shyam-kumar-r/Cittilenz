@@ -4,6 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+    <!-- ========================= -->
+    <!-- BASIC PROJECT INFO -->
+    <!-- ========================= -->
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -19,8 +22,12 @@
     <name>cittilenz</name>
     <description>Smart Urban Issue Reporting Portal Backend</description>
 
+    <!-- ========================= -->
+    <!-- JAVA VERSION -->
+    <!-- ========================= -->
     <properties>
-        <java.version>17</java.version>
+        <!-- Java 21 is supported by Spring Boot 3.5.x -->
+        <java.version>21</java.version>
     </properties>
 
     <!-- ========================= -->
@@ -28,7 +35,11 @@
     <!-- ========================= -->
     <dependencies>
 
-        <!-- Spring Web (REST APIs) -->
+        <!-- ========================= -->
+        <!-- CORE SPRING -->
+        <!-- ========================= -->
+
+        <!-- REST APIs -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -40,95 +51,119 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
-        <!-- PostgreSQL Driver -->
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Bean Validation (DTO validation) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- ========================= -->
+        <!-- DATABASE -->
+        <!-- ========================= -->
+
+        <!-- PostgreSQL JDBC Driver -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Hibernate Spatial (PostGIS Support) -->
+        <!-- Hibernate Spatial (PostGIS integration) -->
+        <!-- Version is managed by Spring Boot -->
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-spatial</artifactId>
-            <version>6.4.1.Final</version>
         </dependency>
 
-        <!-- JTS Geometry Library -->
+        <!-- JTS Geometry Library (MANDATORY, NOT BOM-MANAGED) -->
+        <!-- Required for Point, MultiPolygon, GeometryFactory, Coordinate -->
         <dependency>
             <groupId>org.locationtech.jts</groupId>
             <artifactId>jts-core</artifactId>
             <version>1.19.0</version>
         </dependency>
 
-        <!-- Spring Security (Form Login) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
+        <!-- ========================= -->
+        <!-- WEB + ASYNC -->
+        <!-- ========================= -->
 
-        <!-- Validation (DTO validation) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-
-        <!-- WebSocket (Real-time notifications) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-websocket</artifactId>
-        </dependency>
-
-        <!-- Mail (Email notifications) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
-        <!-- WebClient (AI microservice / external APIs) -->
+        <!-- WebClient (External APIs like Nominatim, AI services) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
-        <!-- Scheduling & Monitoring -->
+        <!-- WebSocket (Real-time notifications, optional but kept) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- ========================= -->
+        <!-- OBSERVABILITY / OPS -->
+        <!-- ========================= -->
+
+        <!-- Actuator (health, metrics) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- OpenAPI / Swagger UI -->
+        <!-- ========================= -->
+        <!-- UTILITIES -->
+        <!-- ========================= -->
+
+        <!-- Jackson Java Time support -->
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
-        <!-- Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- ModelMapper (Entity ↔ DTO mapping) -->
+        <!-- ModelMapper (DTO ↔ Entity mapping) -->
         <dependency>
             <groupId>org.modelmapper</groupId>
             <artifactId>modelmapper</artifactId>
             <version>3.2.0</version>
         </dependency>
 
-        <!-- Image processing (thumbnails / resizing) -->
+        <!-- Image processing (issue images) -->
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>0.4.20</version>
         </dependency>
 
-        <!-- Jackson Java Time (LocalDateTime handling) -->
+        <!-- Mail support -->
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+        <!-- ========================= -->
+        <!-- OPENAPI / DOCS -->
+        <!-- ========================= -->
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.5.0</version>
+        </dependency>
+
+        <!-- ========================= -->
+        <!-- DEV & BUILD TOOLS -->
+        <!-- ========================= -->
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Configuration Processor -->
@@ -138,7 +173,7 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- DevTools (Local development only) -->
+        <!-- DevTools (DEV only) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -146,7 +181,9 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- ================= TEST ================= -->
+        <!-- ========================= -->
+        <!-- TESTING -->
+        <!-- ========================= -->
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -160,23 +197,41 @@
             <scope>test</scope>
         </dependency>
         
-        <dependency>
-        <groupId>org.hibernate.orm</groupId>
-        <artifactId>hibernate-spatial</artifactId>
-        </dependency>
+        <!-- Resilience4j Core -->
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-spring-boot3</artifactId>
+    <version>2.2.0</version>
+</dependency>
+
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-ratelimiter</artifactId>
+    <version>2.2.0</version>
+</dependency>
+
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-reactor</artifactId>
+    <version>2.2.0</version>
+</dependency>
+
+
 
     </dependencies>
 
     <!-- ========================= -->
-    <!-- BUILD -->
+    <!-- BUILD CONFIG -->
     <!-- ========================= -->
     <build>
         <plugins>
 
+            <!-- Java Compiler -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <release>21</release>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -190,6 +245,7 @@
                 </configuration>
             </plugin>
 
+            <!-- Spring Boot Plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
