@@ -1,12 +1,17 @@
 package com.civic_reporting.cittilenz.controller;
 
+import com.civic_reporting.cittilenz.dto.response.AdminDashboardResponse;
 import com.civic_reporting.cittilenz.dto.response.ApiResponse;
+import com.civic_reporting.cittilenz.dto.response.DashboardAnalyticsResponse;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
 import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.enums.IssueStatus;
 import com.civic_reporting.cittilenz.enums.UserRole;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
+import com.civic_reporting.cittilenz.service.DashboardAnalyticsService;
 import com.civic_reporting.cittilenz.service.IssueQueryService;
+
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,16 +28,20 @@ import org.springframework.web.bind.annotation.*;
 public class AdminIssueController {
 
     private final IssueQueryService issueQueryService;
+    private final DashboardAnalyticsService dashboardAnalyticsService;
     private final IssueMapper issueMapper;
 
     public AdminIssueController(
             IssueQueryService issueQueryService,
-            IssueMapper issueMapper
+            IssueMapper issueMapper,
+            DashboardAnalyticsService dashboardAnalyticsService
     ) {
         this.issueQueryService = issueQueryService;
         this.issueMapper = issueMapper;
+        this.dashboardAnalyticsService = dashboardAnalyticsService;
     }
-
+    
+    @RateLimiter(name = "issueFilterLimiter")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<IssueResponse>>> filterIssues(
 
@@ -66,4 +75,14 @@ public class AdminIssueController {
 
         return ResponseEntity.ok(ApiResponse.success(responsePage));
     }
+    
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<AdminDashboardResponse>> getDashboard() {
+
+        AdminDashboardResponse response =
+                dashboardAnalyticsService.getAdminDashboard();
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
 }

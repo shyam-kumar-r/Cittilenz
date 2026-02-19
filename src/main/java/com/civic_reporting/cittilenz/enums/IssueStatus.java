@@ -5,7 +5,6 @@ public enum IssueStatus {
     ASSIGNED,
     IN_PROGRESS,
     RESOLVED,
-    REJECTED,
     ESCALATED,
     REASSIGNED
 }

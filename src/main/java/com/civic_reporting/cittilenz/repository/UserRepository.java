@@ -4,6 +4,7 @@ import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.UserRole;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,4 +36,36 @@ public interface UserRepository extends JpaRepository<User, Integer> {
             UserRole role,
             Integer wardId
     );
+    
+    
+ // ==============================
+ // 📊 ADMIN DASHBOARD USER COUNTS
+ // ==============================
+
+ @Query("""
+     SELECT COUNT(u)
+     FROM User u
+     WHERE u.active = true
+     AND u.role = com.civic_reporting.cittilenz.enums.UserRole.CITIZEN
+ """)
+ long countActiveCitizens();
+
+
+ @Query("""
+     SELECT COUNT(u)
+     FROM User u
+     WHERE u.active = true
+     AND u.role = com.civic_reporting.cittilenz.enums.UserRole.OFFICIAL
+ """)
+ long countActiveOfficials();
+
+
+ @Query("""
+     SELECT COUNT(u)
+     FROM User u
+     WHERE u.active = true
+     AND u.role = com.civic_reporting.cittilenz.enums.UserRole.WARD_SUPERIOR
+ """)
+ long countActiveWardSuperiors();
+
 }

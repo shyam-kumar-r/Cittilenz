@@ -17,6 +17,9 @@ public interface IssueQueryService {
     // ========================
 
     Issue getIssueById(Integer issueId);
+    
+    Page<Issue> getIssuesByReporter(Integer reporterId, Pageable pageable);
+
 
     List<Issue> getIssuesByReporter(Integer reporterId);
 

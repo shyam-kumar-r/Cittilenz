@@ -2,15 +2,25 @@ package com.civic_reporting.cittilenz.controller;
 
 import com.civic_reporting.cittilenz.dto.request.IssueCreateRequest;
 import com.civic_reporting.cittilenz.dto.response.ApiResponse;
+import com.civic_reporting.cittilenz.dto.response.CitizenDashboardResponse;
+import com.civic_reporting.cittilenz.dto.response.DashboardAnalyticsResponse;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
 import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.UserRole;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
 import com.civic_reporting.cittilenz.repository.UserRepository;
+import com.civic_reporting.cittilenz.service.DashboardAnalyticsService;
 import com.civic_reporting.cittilenz.service.IssueQueryService;
 import com.civic_reporting.cittilenz.service.IssueService;
+
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -27,17 +37,20 @@ public class IssueController {
     private final IssueQueryService issueQueryService;
     private final IssueMapper issueMapper;
     private final UserRepository userRepository;
+    private final DashboardAnalyticsService dashboardAnalyticsService;
 
     public IssueController(
             IssueService issueService,
             IssueQueryService issueQueryService,
             IssueMapper issueMapper,
-            UserRepository userRepository
+            UserRepository userRepository,
+            DashboardAnalyticsService dashboardAnalyticsService
     ) {
         this.issueService = issueService;
         this.issueQueryService = issueQueryService;
         this.issueMapper = issueMapper;
         this.userRepository = userRepository;
+        this.dashboardAnalyticsService = dashboardAnalyticsService;
     }
 
     // =========================
@@ -94,18 +107,47 @@ public class IssueController {
     // =========================
     // GET /issues/my
     // =========================
+    @RateLimiter(name = "issueFilterLimiter")
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<List<IssueResponse>>> getMyIssues(
+    public ResponseEntity<ApiResponse<Page<IssueResponse>>> getMyIssues(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction,
             Authentication authentication
     ) {
 
         User user = getCurrentUser(authentication);
 
-        List<IssueResponse> response = issueQueryService
-                .getIssuesByReporter(user.getId())
-                .stream()
-                .map(issueMapper::toResponse)
-                .collect(Collectors.toList());
+        // Build pageable safely
+        Sort sort = Sort.by(
+                Sort.Direction.fromString(direction),
+                sortBy
+        );
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<IssueResponse> response = issueQueryService
+                .getIssuesByReporter(user.getId(), pageable)
+                .map(issueMapper::toResponse);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(response)
+        );
+    }
+
+    
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<CitizenDashboardResponse>> getDashboard(
+            Authentication authentication
+    ) {
+
+        User citizen = userRepository
+                .findByUsernameAndActiveTrue(authentication.getName())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        CitizenDashboardResponse response =
+                dashboardAnalyticsService.getCitizenDashboard(citizen.getId());
 
         return ResponseEntity.ok(
                 ApiResponse.success(response)
@@ -132,13 +174,11 @@ public class IssueController {
 
     private User getCurrentUser(Authentication authentication) {
 
-        String username = authentication.getName();
-
-        return userRepository.findByIdAndActiveTrue(
-                userRepository.findAll().stream()
-                        .filter(u -> u.getUsername().equals(username))
-                        .findFirst()
-                        .orElseThrow().getId()
-        ).orElseThrow();
+        return userRepository
+                .findByUsernameAndActiveTrue(authentication.getName())
+                .orElseThrow();
     }
+
+    
+    
 }

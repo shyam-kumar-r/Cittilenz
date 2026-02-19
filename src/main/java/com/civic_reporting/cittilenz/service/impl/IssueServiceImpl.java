@@ -9,6 +9,7 @@ import com.civic_reporting.cittilenz.repository.*;
 import com.civic_reporting.cittilenz.service.*;
 import com.civic_reporting.cittilenz.util.GeometryUtil;
 import org.locationtech.jts.geom.Point;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +80,16 @@ public class IssueServiceImpl implements IssueService {
 
     @Override
     @Transactional
+    @CacheEvict(
+    	    cacheNames = {
+    	        "issueFilterCache",
+    	        "adminDashboardCache",
+    	        "citizenDashboardCache",
+    	        "officialDashboardCache",
+    	        "superiorDashboardCache"
+    	    },
+    	    allEntries = true
+    	)
     public Issue createIssue(
             IssueCreateRequest request,
             MultipartFile image,
@@ -273,6 +284,16 @@ public class IssueServiceImpl implements IssueService {
     }
     
     @Override
+    @CacheEvict(
+    	    cacheNames = {
+    	        "issueFilterCache",
+    	        "adminDashboardCache",
+    	        "citizenDashboardCache",
+    	        "officialDashboardCache",
+    	        "superiorDashboardCache"
+    	    },
+    	    allEntries = true
+    	)
     public Issue linkDuplicate(Integer issueId, Integer reporterId) {
 
         Issue issue = issueRepository.findById(issueId)
@@ -309,6 +330,16 @@ public class IssueServiceImpl implements IssueService {
     }
     
     @Transactional
+    @CacheEvict(
+    	    cacheNames = {
+    	        "issueFilterCache",
+    	        "adminDashboardCache",
+    	        "citizenDashboardCache",
+    	        "officialDashboardCache",
+    	        "superiorDashboardCache"
+    	    },
+    	    allEntries = true
+    	)
     public Issue updateIssueStatus(
             Integer issueId,
             IssueStatus newStatus,
@@ -367,47 +398,40 @@ public class IssueServiceImpl implements IssueService {
         switch (oldStatus) {
 
             case SUBMITTED -> {
-                if (!(newStatus == IssueStatus.ASSIGNED ||
-                      newStatus == IssueStatus.REJECTED)) {
-                    throw new IllegalStateException("Invalid status transition");
+                if (newStatus != IssueStatus.ASSIGNED) {
+                    throw new IllegalStateException("SUBMITTED can only transition to ASSIGNED");
                 }
             }
 
             case ASSIGNED -> {
-                if (!(newStatus == IssueStatus.IN_PROGRESS ||
-                      newStatus == IssueStatus.REASSIGNED ||
-                      newStatus == IssueStatus.ESCALATED ||
-                      newStatus == IssueStatus.RESOLVED)) {
-                    throw new IllegalStateException("Invalid status transition");
+                if (newStatus != IssueStatus.IN_PROGRESS) {
+                    throw new IllegalStateException("ASSIGNED can only transition to IN_PROGRESS");
                 }
             }
 
             case IN_PROGRESS -> {
                 if (!(newStatus == IssueStatus.RESOLVED ||
                       newStatus == IssueStatus.ESCALATED)) {
-                    throw new IllegalStateException("Invalid status transition");
+                    throw new IllegalStateException("IN_PROGRESS can only transition to RESOLVED or ESCALATED");
                 }
             }
 
             case ESCALATED -> {
-                if (!(newStatus == IssueStatus.REASSIGNED ||
-                      newStatus == IssueStatus.RESOLVED)) {
-                    throw new IllegalStateException("Invalid status transition");
+                if (newStatus != IssueStatus.REASSIGNED) {
+                    throw new IllegalStateException("ESCALATED can only transition to REASSIGNED");
                 }
             }
 
             case REASSIGNED -> {
-                if (!(newStatus == IssueStatus.IN_PROGRESS ||
-                      newStatus == IssueStatus.RESOLVED)) {
-                    throw new IllegalStateException("Invalid status transition");
+                if (newStatus != IssueStatus.ASSIGNED) {
+                    throw new IllegalStateException("REASSIGNED must go back to ASSIGNED");
                 }
             }
 
-            case RESOLVED, REJECTED -> {
-                throw new IllegalStateException("Closed issue cannot change status");
+            case RESOLVED -> {
+                throw new IllegalStateException("RESOLVED issue is terminal");
             }
         }
     }
-
 
 }

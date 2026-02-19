@@ -3,6 +3,7 @@ package com.civic_reporting.cittilenz.service.impl;
 import com.civic_reporting.cittilenz.dto.response.IssueHistoryResponse;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
 import com.civic_reporting.cittilenz.entity.Issue;
+
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.IssueStatus;
 import com.civic_reporting.cittilenz.enums.UserRole;
@@ -10,8 +11,11 @@ import com.civic_reporting.cittilenz.exception.ResourceNotFoundException;
 import com.civic_reporting.cittilenz.repository.IssueHistoryRepository;
 import com.civic_reporting.cittilenz.repository.IssueRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
+import com.civic_reporting.cittilenz.service.FilterAuditService;
 import com.civic_reporting.cittilenz.service.IssueQueryService;
 import com.civic_reporting.cittilenz.specification.IssueSpecification;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -30,27 +34,92 @@ public class IssueQueryServiceImpl implements IssueQueryService {
 	
 	private static final Logger log =
 	        LoggerFactory.getLogger(IssueQueryServiceImpl.class);
+	private static final int MAX_PAGE_SIZE = 50;
+	private static final int DEFAULT_PAGE_SIZE = 10;
 
     private final IssueRepository issueRepository;
     private final UserRepository userRepository;
     private final IssueHistoryRepository issueHistoryRepository;
     private final IssueMapper issueMapper;
+    private final FilterAuditService filterAuditService;
+
 
     public IssueQueryServiceImpl(
             IssueRepository issueRepository,
             UserRepository userRepository,
             IssueHistoryRepository issueHistoryRepository,
-            IssueMapper issueMapper
+            IssueMapper issueMapper,
+            FilterAuditService filterAuditService
     ) {
         this.issueRepository = issueRepository;
         this.userRepository = userRepository;
         this.issueHistoryRepository = issueHistoryRepository;
         this.issueMapper = issueMapper;
+        this.filterAuditService = filterAuditService;
     }
 
     // ========================
     // Citizen
     // ========================
+    
+    
+    @Override
+    @Cacheable(
+    	    cacheNames = "issueFilterCache",
+    	    key = "'citizen:' + #reporterId + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
+    	)
+    public Page<Issue> getIssuesByReporter(
+            Integer reporterId,
+            Pageable pageable
+    ) {
+
+        if (reporterId == null) {
+            throw new IllegalArgumentException("Reporter ID cannot be null");
+        }
+
+        int pageNumber = pageable.getPageNumber();
+        int requestedSize = pageable.getPageSize();
+
+        if (pageNumber < 0) {
+            pageNumber = 0;
+        }
+
+        int safeSize;
+
+        if (requestedSize <= 0) {
+            safeSize = DEFAULT_PAGE_SIZE;
+        } else if (requestedSize > MAX_PAGE_SIZE) {
+            safeSize = MAX_PAGE_SIZE;
+        } else {
+            safeSize = requestedSize;
+        }
+
+        Sort sort = pageable.getSort().isUnsorted()
+                ? Sort.by(Sort.Direction.DESC, "createdAt")
+                : pageable.getSort();
+
+        Pageable safePageable =
+                PageRequest.of(pageNumber, safeSize, sort);
+
+        Page<Issue> result = issueRepository.findAll(
+                IssueSpecification
+                        .isActive()
+                        .and(IssueSpecification.hasReporter(reporterId)),
+                safePageable
+        );
+
+        log.info(
+                "Citizen Issues Fetch | reporter={} | page={} | requestedSize={} | appliedSize={} | totalResults={}",
+                reporterId,
+                pageNumber,
+                requestedSize,
+                safeSize,
+                result.getTotalElements()
+        );
+
+        return result;
+    }
+
     
     @Override
     public IssueResponse getIssueResponse(Integer issueId) {
@@ -197,7 +266,12 @@ public class IssueQueryServiceImpl implements IssueQueryService {
         );
     }
     
+    
     @Override
+    @Cacheable(
+    	    cacheNames = "issueFilterCache",
+    	    key = "#role + ':' + #wardId + ':' + #departmentId + ':' + #reportedBy + ':' + #status + ':' + #pageable.pageNumber + ':' + #pageable.pageSize + ':' + #pageable.sort"
+    	)
     public Page<Issue> filterIssues(
             Integer wardId,
             Integer departmentId,
@@ -268,20 +342,26 @@ public class IssueQueryServiceImpl implements IssueQueryService {
         // 📊 ENTERPRISE AUDIT LOGGING
         // ======================================
 
-        log.info(
-                "Issue Filter Used | role={} | ward={} | dept={} | reporter={} | status={} | page={} | size={} | totalResults={}",
+     // 🔥 Async audit logging
+        filterAuditService.logFilterUsage(
+                getCurrentUsername(), // implement helper
                 role,
                 effectiveWardId,
                 effectiveDepartmentId,
                 reportedBy,
-                status,
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
+                status != null ? status.name() : null,
+                pageable,
                 result.getTotalElements()
         );
 
         return result;
     }
-
+    
+    private String getCurrentUsername() {
+        return org.springframework.security.core.context.SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+    }
 
 }

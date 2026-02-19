@@ -1,14 +1,19 @@
 package com.civic_reporting.cittilenz.controller;
 
 import com.civic_reporting.cittilenz.dto.response.ApiResponse;
+import com.civic_reporting.cittilenz.dto.response.DashboardAnalyticsResponse;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
+import com.civic_reporting.cittilenz.dto.response.OfficialDashboardResponse;
 import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.IssueStatus;
 import com.civic_reporting.cittilenz.enums.UserRole;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
 import com.civic_reporting.cittilenz.repository.UserRepository;
+import com.civic_reporting.cittilenz.service.DashboardAnalyticsService;
 import com.civic_reporting.cittilenz.service.IssueQueryService;
+
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,17 +33,21 @@ public class OfficialIssueController {
     private final IssueQueryService issueQueryService;
     private final IssueMapper issueMapper;
     private final UserRepository userRepository;
+    private final DashboardAnalyticsService dashboardAnalyticsService;
 
     public OfficialIssueController(
             IssueQueryService issueQueryService,
             IssueMapper issueMapper,
-            UserRepository userRepository
+            UserRepository userRepository,
+            DashboardAnalyticsService dashboardAnalyticsService
     ) {
         this.issueQueryService = issueQueryService;
         this.issueMapper = issueMapper;
         this.userRepository = userRepository;
+        this.dashboardAnalyticsService = dashboardAnalyticsService;
     }
-
+    
+    @RateLimiter(name = "issueFilterLimiter")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<IssueResponse>>> filterOfficialIssues(
 
@@ -80,4 +89,20 @@ public class OfficialIssueController {
 
         return ResponseEntity.ok(ApiResponse.success(responsePage));
     }
+    
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<OfficialDashboardResponse>> getDashboard(
+            Authentication authentication
+    ) {
+
+        User official = userRepository
+                .findByUsernameAndActiveTrue(authentication.getName())
+                .orElseThrow(() -> new IllegalStateException("Official not found"));
+
+        OfficialDashboardResponse response =
+                dashboardAnalyticsService.getOfficialDashboard(official.getId());
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
 }

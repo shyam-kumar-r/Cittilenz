@@ -21,5 +21,19 @@ spring:
         format_sql: true
         globally_quoted_identifiers: true
 
+
+
 server:
   port: 8080
+
+# ===============================
+# 🔒 Rate Limiter Configuration
+# ===============================
+
+resilience4j:
+  ratelimiter:
+    instances:
+      issueFilterLimiter:
+        limitForPeriod: 20
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
