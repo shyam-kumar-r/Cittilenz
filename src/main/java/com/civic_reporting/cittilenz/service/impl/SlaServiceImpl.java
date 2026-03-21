@@ -1,53 +1,31 @@
 package com.civic_reporting.cittilenz.service.impl;
 
-import com.civic_reporting.cittilenz.entity.Issue;
-import com.civic_reporting.cittilenz.enums.IssueStatus;
 import com.civic_reporting.cittilenz.repository.IssueRepository;
 import com.civic_reporting.cittilenz.service.SlaService;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SlaServiceImpl implements SlaService {
-	
-	private static final Logger log =
-	        LoggerFactory.getLogger(SlaServiceImpl.class);
-
 
     private final IssueRepository issueRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public SlaServiceImpl(IssueRepository issueRepository) {
+    public SlaServiceImpl(IssueRepository issueRepository, JdbcTemplate jdbcTemplate) {
         this.issueRepository = issueRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
-    /**
-     * Detects SLA breached issues and escalates them.
-     * This method is triggered by scheduler.
-     */
-    @Override
-    @Async
-    public void checkAndEscalateBreachedIssues() {
+	@Override
+	@Transactional
+	public void processSlaBreaches() {
+		issueRepository.callProcessAllSlaBreaches();
+	}
 
-    	List<Issue> breached = issueRepository.findBreachedIssues(LocalDateTime.now());
-
-
-        for (Issue issue : breached) {
-
-            // Prevent double escalation
-            if (issue.getStatus() == IssueStatus.ESCALATED) {
-                continue;
-            }
-
-            issue.setStatus(IssueStatus.ESCALATED);
-            issue.setAssignedAt(LocalDateTime.now());
-
-            issueRepository.save(issue);
-        }
-    }
+	@Override
+	public void processReassignedIssues() {
+	    jdbcTemplate.execute("SELECT process_reassigned_to_assigned()");
+	}
 }

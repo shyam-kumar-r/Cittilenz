@@ -13,6 +13,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 	Optional<User> findByUsernameAndActiveTrue(String username);
 
     Optional<User> findByUsername(String username);
+    
+    Optional<User> findByEmailAndActiveTrue(String email);
 
     Optional<User> findByEmail(String email);
 
@@ -67,5 +69,79 @@ public interface UserRepository extends JpaRepository<User, Integer> {
      AND u.role = com.civic_reporting.cittilenz.enums.UserRole.WARD_SUPERIOR
  """)
  long countActiveWardSuperiors();
-
+ 
+ Optional<User> findByRole(UserRole role);
+ 
+ @Query("""
+		    SELECT u.id FROM User u
+		    WHERE u.role = com.civic_reporting.cittilenz.enums.UserRole.OFFICIAL
+		      AND u.wardId = :wardId
+		      AND u.departmentId = :departmentId
+		      AND u.id <> :currentOfficialId
+		      AND u.active = true
+		    ORDER BY function('random')
+		""")
+		List<Integer> findRandomOfficialForAssignmentList(
+		        Integer wardId,
+		        Integer departmentId,
+		        Integer currentOfficialId
+		);
+ 
+ @Query(value = """
+		    SELECT u.id
+		    FROM users u
+		    WHERE u.role = 'OFFICIAL'
+		      AND u.ward_id = :wardId
+		      AND u.department_id = :departmentId
+		      AND u.id <> :currentOfficialId
+		      AND u.is_active = true
+		      AND u.id NOT IN (
+		            SELECT ish.changed_by
+		            FROM issue_status_history ish
+		            WHERE ish.issue_id = :issueId
+		              AND ish.changed_by IN (
+		                    SELECT id FROM users WHERE role = 'OFFICIAL'
+		              )
+		            ORDER BY ish.changed_at DESC
+		            LIMIT :limit
+		      )
+		    ORDER BY RANDOM()
+		    LIMIT 1
+		""", nativeQuery = true)
+		Optional<Integer> findSmartOfficialForAssignment(
+		        Integer wardId,
+		        Integer departmentId,
+		        Integer currentOfficialId,
+		        Integer issueId,
+		        int limit
+		);
+ 
+ @Query(value = """
+		    SELECT u.id
+		    FROM users u
+		    WHERE u.role = 'OFFICIAL'
+		      AND u.ward_id = :wardId
+		      AND u.department_id = :departmentId
+		      AND u.id <> :currentOfficialId
+		      AND u.is_active = true
+		      AND u.id NOT IN (
+		            SELECT ish.changed_by
+		            FROM issue_status_history ish
+		            WHERE ish.issue_id = :issueId
+		              AND ish.changed_by IN (
+		                    SELECT id FROM users WHERE role = 'OFFICIAL'
+		              )
+		            ORDER BY ish.changed_at DESC
+		            LIMIT :limit
+		      )
+		    ORDER BY RANDOM()
+		    LIMIT 1
+		""", nativeQuery = true)
+		Optional<Integer> findSmartOfficialForAssignment(
+		        Integer wardId,
+		        Integer departmentId,
+		        Integer currentOfficialId,
+		        Integer issueId,
+		        Integer limit
+		);
 }

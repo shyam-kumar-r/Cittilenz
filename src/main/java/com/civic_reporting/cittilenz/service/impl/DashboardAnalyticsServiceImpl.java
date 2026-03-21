@@ -107,22 +107,21 @@ public class DashboardAnalyticsServiceImpl implements DashboardAnalyticsService 
 
     @Override
     @Cacheable(
-    	    cacheNames = "superiorDashboardCache",
-    	    key = "'superior:' + #wardId"
-    	)
+            cacheNames = "superiorDashboardCache",
+            key = "'superior:' + #wardId"
+    )
     public WardSuperiorDashboardResponse getWardSuperiorDashboard(Integer wardId) {
 
         WardSuperiorDashboardResponse response = new WardSuperiorDashboardResponse();
 
-        Map<IssueStatus, Long> statusMap =
-                mapStatusCounts(issueRepository.countEscalatedByWard(wardId));
+        long escalatedCount =
+                issueRepository.countEscalatedIssuesWard(wardId);
 
-        response.setTotalEscalated(
-                statusMap.getOrDefault(IssueStatus.ESCALATED, 0L)
-        );
+        response.setTotalEscalated(escalatedCount);
 
         return response;
     }
+
 
     // =====================================================
     // 🔧 COMMON MAPPER

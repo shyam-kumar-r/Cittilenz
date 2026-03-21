@@ -1,8 +1,9 @@
 package com.civic_reporting.cittilenz.enums;
 
 public enum UserRole {
-    CITIZEN,
+    ADMIN,
     OFFICIAL,
     WARD_SUPERIOR,
-    ADMIN
+    CITIZEN,
+    SYSTEM
 }

@@ -6,6 +6,7 @@ import com.civic_reporting.cittilenz.mapper.UserMapper;
 import com.civic_reporting.cittilenz.security.UserPrincipal;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,14 +29,12 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
     }
 
-    /* =========================================================
-       LOGIN (JSON + SESSION)
-       ========================================================= */
     @PostMapping("/login")
     public UserResponse login(@Valid @RequestBody LoginRequest request,
                               HttpServletRequest httpRequest) {
 
         try {
+
             Authentication authentication =
                     authenticationManager.authenticate(
                             new UsernamePasswordAuthenticationToken(
@@ -43,11 +43,16 @@ public class AuthController {
                             )
                     );
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
 
-            // Force session creation
-            httpRequest.getSession(true);
+            SecurityContextHolder.setContext(context);
+
+            HttpSession session = httpRequest.getSession(true);
+            session.setAttribute(
+                    "SPRING_SECURITY_CONTEXT",
+                    context
+            );
 
             UserPrincipal principal =
                     (UserPrincipal) authentication.getPrincipal();
@@ -60,44 +65,43 @@ public class AuthController {
             return UserMapper.toResponse(principal.getUser());
 
         } catch (Exception ex) {
+
             throw new ResponseStatusException(
                     HttpStatus.UNAUTHORIZED,
                     "Invalid credentials"
             );
+
         }
+
     }
 
-    /* =========================================================
-       CURRENT USER
-       ========================================================= */
     @GetMapping("/me")
     public UserResponse me(Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Unauthorized");
+                    HttpStatus.UNAUTHORIZED,
+                    "Unauthorized"
+            );
         }
 
-        Object principalObj = authentication.getPrincipal();
-
-        if (!(principalObj instanceof UserPrincipal)) {
+        if (!(authentication.getPrincipal() instanceof UserPrincipal principal)) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Unauthorized");
+                    HttpStatus.UNAUTHORIZED,
+                    "Unauthorized"
+            );
         }
-
-        UserPrincipal principal = (UserPrincipal) principalObj;
 
         if (!principal.getUser().isActive()) {
             throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED, "Account deactivated");
+                    HttpStatus.UNAUTHORIZED,
+                    "Account deactivated"
+            );
         }
 
         return UserMapper.toResponse(principal.getUser());
     }
 
-    /* =========================================================
-       LOGOUT
-       ========================================================= */
     @PostMapping("/logout")
     public void logout(HttpServletRequest request) {
 
@@ -106,5 +110,6 @@ public class AuthController {
         if (request.getSession(false) != null) {
             request.getSession(false).invalidate();
         }
+
     }
 }

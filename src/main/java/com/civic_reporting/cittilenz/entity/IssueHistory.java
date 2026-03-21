@@ -2,6 +2,7 @@ package com.civic_reporting.cittilenz.entity;
 
 import com.civic_reporting.cittilenz.enums.IssueStatus;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,7 +17,7 @@ public class IssueHistory {
     private Integer issueId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "old_status", nullable = false)
+    @Column(name = "old_status")   // nullable allowed for first record
     private IssueStatus oldStatus;
 
     @Enumerated(EnumType.STRING)
@@ -26,69 +27,69 @@ public class IssueHistory {
     @Column(name = "changed_by", nullable = false)
     private Integer changedBy;
 
+    @Column(name = "remarks")
     private String remarks;
 
-    @Column(name = "changed_at")
+    @Column(name = "changed_at", nullable = false)
     private LocalDateTime changedAt;
 
-	public Integer getId() {
-		return id;
-	}
+    // ----------------------------
+    // GETTERS & SETTERS
+    // ----------------------------
 
-	public void setId(Integer id) {
-		this.id = id;
-	}
+    public Integer getId() {
+        return id;
+    }
 
-	public Integer getIssueId() {
-		return issueId;
-	}
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-	public void setIssueId(Integer issueId) {
-		this.issueId = issueId;
-	}
+    public Integer getIssueId() {
+        return issueId;
+    }
 
-	public Integer getChangedBy() {
-		return changedBy;
-	}
+    public void setIssueId(Integer issueId) {
+        this.issueId = issueId;
+    }
 
-	public void setChangedBy(Integer changedBy) {
-		this.changedBy = changedBy;
-	}
+    public IssueStatus getOldStatus() {
+        return oldStatus;
+    }
 
-	public String getRemarks() {
-		return remarks;
-	}
+    public void setOldStatus(IssueStatus oldStatus) {
+        this.oldStatus = oldStatus;
+    }
 
-	public void setRemarks(String remarks) {
-		this.remarks = remarks;
-	}
+    public IssueStatus getNewStatus() {
+        return newStatus;
+    }
 
-	public LocalDateTime getChangedAt() {
-		return changedAt;
-	}
+    public void setNewStatus(IssueStatus newStatus) {
+        this.newStatus = newStatus;
+    }
 
-	public void setChangedAt(LocalDateTime changedAt) {
-		this.changedAt = changedAt;
-	}
+    public Integer getChangedBy() {
+        return changedBy;
+    }
 
-	public IssueStatus getOldStatus() {
-		return oldStatus;
-	}
+    public void setChangedBy(Integer changedBy) {
+        this.changedBy = changedBy;
+    }
 
-	public void setOldStatus(IssueStatus oldStatus) {
-		this.oldStatus = oldStatus;
-	}
+    public String getRemarks() {
+        return remarks;
+    }
 
-	public IssueStatus getNewStatus() {
-		return newStatus;
-	}
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
 
-	public void setNewStatus(IssueStatus newStatus) {
-		this.newStatus = newStatus;
-	}
-	
-	
+    public LocalDateTime getChangedAt() {
+        return changedAt;
+    }
 
-    // getters and setters
-    
+    public void setChangedAt(LocalDateTime changedAt) {
+        this.changedAt = changedAt;
+    }
 }

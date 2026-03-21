@@ -67,13 +67,33 @@ public class IssueResponse {
     private LocalDateTime createdAt;
     private LocalDateTime assignedAt;
     private LocalDateTime resolvedAt;
-    private LocalDateTime slaDeadline;
+    private LocalDateTime escalatedAt;
     private boolean active;
 
     // =========================
     // Timeline
     // =========================
     private List<IssueHistoryResponse> history;
+    
+    private Integer id;
+
+    private Integer assignedOfficialId;
+
+    private LocalDateTime startedAt;
+    
+    private LocalDateTime reassignedAt;
+
+    private LocalDateTime softSlaDeadline;
+    private LocalDateTime hardSlaDeadline;
+    private Boolean softSlaBreached;
+    private Boolean hardSlaBreached;
+    private Integer escalationCount;
+    private Integer reassignmentCount;
+
+    private boolean requiresSupervisorIntervention;
+
+    private Long version;
+    private String resolvedImageUrl;
 
     // =========================
     // Getters & Setters
@@ -163,12 +183,103 @@ public class IssueResponse {
     public LocalDateTime getResolvedAt() { return resolvedAt; }
     public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
 
-    public LocalDateTime getSlaDeadline() { return slaDeadline; }
-    public void setSlaDeadline(LocalDateTime slaDeadline) { this.slaDeadline = slaDeadline; }
-
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
     public List<IssueHistoryResponse> getHistory() { return history; }
     public void setHistory(List<IssueHistoryResponse> history) { this.history = history; }
+	public Integer getId() {
+		return id;
+	}
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	public Integer getAssignedOfficialId() {
+		return assignedOfficialId;
+	}
+	public void setAssignedOfficialId(Integer assignedOfficialId) {
+		this.assignedOfficialId = assignedOfficialId;
+	}
+	public LocalDateTime getStartedAt() {
+		return startedAt;
+	}
+	public void setStartedAt(LocalDateTime startedAt) {
+		this.startedAt = startedAt;
+	}
+	public LocalDateTime getSoftSlaDeadline() {
+		return softSlaDeadline;
+	}
+	public void setSoftSlaDeadline(LocalDateTime softSlaDeadline) {
+		this.softSlaDeadline = softSlaDeadline;
+	}
+	public LocalDateTime getHardSlaDeadline() {
+		return hardSlaDeadline;
+	}
+	public void setHardSlaDeadline(LocalDateTime hardSlaDeadline) {
+		this.hardSlaDeadline = hardSlaDeadline;
+	}
+	public boolean isRequiresSupervisorIntervention() {
+		return requiresSupervisorIntervention;
+	}
+	public void setRequiresSupervisorIntervention(boolean requiresSupervisorIntervention) {
+		this.requiresSupervisorIntervention = requiresSupervisorIntervention;
+	}
+	public Long getVersion() {
+		return version;
+	}
+	public void setVersion(Long version) {
+		this.version = version;
+	}
+	public LocalDateTime getEscalatedAt() {
+		return escalatedAt;
+	}
+	public void setEscalatedAt(LocalDateTime escalatedAt) {
+		this.escalatedAt = escalatedAt;
+	}
+    
+	public Boolean getSoftSlaBreached() {
+	    return softSlaBreached;
+	}
+
+	public void setSoftSlaBreached(Boolean softSlaBreached) {
+	    this.softSlaBreached = softSlaBreached;
+	}
+
+	public Boolean getHardSlaBreached() {
+	    return hardSlaBreached;
+	}
+
+	public void setHardSlaBreached(Boolean hardSlaBreached) {
+	    this.hardSlaBreached = hardSlaBreached;
+	}
+
+	public Integer getEscalationCount() {
+	    return escalationCount;
+	}
+
+	public void setEscalationCount(Integer escalationCount) {
+	    this.escalationCount = escalationCount;
+	}
+
+	public Integer getReassignmentCount() {
+	    return reassignmentCount;
+	}
+
+	public void setReassignmentCount(Integer reassignmentCount) {
+	    this.reassignmentCount = reassignmentCount;
+	}
+	public LocalDateTime getReassignedAt() {
+		return reassignedAt;
+	}
+	public void setReassignedAt(LocalDateTime reassignedAt) {
+		this.reassignedAt = reassignedAt;
+	}
+	
+	public String getResolvedImageUrl() {
+	    return resolvedImageUrl;
+	}
+
+	public void setResolvedImageUrl(String resolvedImageUrl) {
+	    this.resolvedImageUrl = resolvedImageUrl;
+	}
 }

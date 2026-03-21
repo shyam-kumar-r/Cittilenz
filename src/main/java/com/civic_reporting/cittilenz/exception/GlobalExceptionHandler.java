@@ -1,10 +1,13 @@
 package com.civic_reporting.cittilenz.exception;
 
 import com.civic_reporting.cittilenz.dto.response.ApiResponse;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +16,14 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Global Exception Handler
+ *
+ * Responsibilities:
+ * - Standardize API error responses
+ * - Prevent stack trace leaks
+ * - Convert technical exceptions into business-safe messages
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -34,7 +45,7 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage());
         }
 
-        log.warn("Validation error: {}", errors);
+        log.warn("Validation failed: {}", errors);
 
         return buildResponse(
                 false,
@@ -83,7 +94,64 @@ public class GlobalExceptionHandler {
     }
 
     /* =========================
-       500 - Internal Error
+       403 - Access Denied
+    ========================= */
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleAccessDenied(
+            AccessDeniedException ex
+    ) {
+
+        log.warn("Access denied: {}", ex.getMessage());
+
+        return buildResponse(
+                false,
+                "You do not have permission to perform this action.",
+                null,
+                HttpStatus.FORBIDDEN
+        );
+    }
+
+    /* =========================
+       409 - Optimistic Lock
+    ========================= */
+
+    @ExceptionHandler(OptimisticLockException.class)
+    public ResponseEntity<ApiResponse<Object>> handleOptimisticLock(
+            OptimisticLockException ex
+    ) {
+
+        log.warn("Optimistic lock conflict detected");
+
+        return buildResponse(
+                false,
+                "Issue was modified by another user. Please refresh and retry.",
+                null,
+                HttpStatus.CONFLICT
+        );
+    }
+
+    /* =========================
+       409 - Data Integrity
+    ========================= */
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrity(
+            DataIntegrityViolationException ex
+    ) {
+
+        log.warn("Database constraint violation");
+
+        return buildResponse(
+                false,
+                "Database constraint violation.",
+                null,
+                HttpStatus.CONFLICT
+        );
+    }
+
+    /* =========================
+       500 - Fallback
     ========================= */
 
     @ExceptionHandler(Exception.class)
@@ -102,7 +170,7 @@ public class GlobalExceptionHandler {
     }
 
     /* =========================
-       Helper Method
+       Response Builder
     ========================= */
 
     private ResponseEntity<ApiResponse<Object>> buildResponse(
@@ -119,5 +187,20 @@ public class GlobalExceptionHandler {
         response.setTimestamp(LocalDateTime.now());
 
         return new ResponseEntity<>(response, status);
+    }
+    
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Object>> handleSpringOptimisticLock(
+            org.springframework.orm.ObjectOptimisticLockingFailureException ex
+    ) {
+
+        log.warn("Optimistic lock conflict detected");
+
+        return buildResponse(
+                false,
+                "Issue was modified by another user. Please refresh and retry.",
+                null,
+                HttpStatus.CONFLICT
+        );
     }
 }

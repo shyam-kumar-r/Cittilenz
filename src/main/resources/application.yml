@@ -37,3 +37,7 @@ resilience4j:
         limitForPeriod: 20
         limitRefreshPeriod: 1s
         timeoutDuration: 0
+
+sla:
+  scheduler:
+    delay: 300000

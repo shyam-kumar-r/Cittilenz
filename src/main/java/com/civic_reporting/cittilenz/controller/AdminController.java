@@ -52,13 +52,6 @@ public class AdminController {
         return UserMapper.toResponse(user);
     }
 
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> toggleStatus(@PathVariable Integer id) {
-        adminService.toggleStatus(id);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping("/{id}/reset-password")
     public ResponseEntity<Void> resetPassword(
             @PathVariable Integer id,

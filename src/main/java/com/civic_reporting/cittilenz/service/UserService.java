@@ -20,4 +20,6 @@ public interface UserService {
     void deactivateCurrentUser();
 
     void deleteCurrentUser(HttpServletRequest request);
+
+	User getAuthenticatedUser();
 }

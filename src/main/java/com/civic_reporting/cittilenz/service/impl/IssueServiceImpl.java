@@ -177,6 +177,14 @@ public class IssueServiceImpl implements IssueService {
         issue.setPriority(issueType.getPriority());
         issue.setCreatedAt(LocalDateTime.now());
         issue.setStatus(IssueStatus.SUBMITTED); // default first state
+        issue.setSoftSlaBreached(false);
+        issue.setHardSlaBreached(false);
+
+        issue.setReassignmentCount(0);
+        issue.setEscalationCount(0);
+
+        issue.setRequiresSupervisorIntervention(false);
+        issue.setActive(true);
 
         String imageUrl = fileStorageService.storeFile(image);
         issue.setImageUrl(imageUrl);
@@ -328,110 +336,4 @@ public class IssueServiceImpl implements IssueService {
 
         return issue;
     }
-    
-    @Transactional
-    @CacheEvict(
-    	    cacheNames = {
-    	        "issueFilterCache",
-    	        "adminDashboardCache",
-    	        "citizenDashboardCache",
-    	        "officialDashboardCache",
-    	        "superiorDashboardCache"
-    	    },
-    	    allEntries = true
-    	)
-    public Issue updateIssueStatus(
-            Integer issueId,
-            IssueStatus newStatus,
-            Integer changedByUserId,
-            String remarks
-    ) {
-
-        Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new ResourceNotFoundException("Issue not found"));
-
-        IssueStatus oldStatus = issue.getStatus();
-
-        if (oldStatus == newStatus) {
-            return issue; // no change
-        }
-
-        // =========================
-        // 1️⃣ Validate Allowed Transitions
-        // =========================
-        validateTransition(oldStatus, newStatus);
-
-        // =========================
-        // 2️⃣ Apply Business Rules
-        // =========================
-        issue.setStatus(newStatus);
-
-        if (newStatus == IssueStatus.ASSIGNED && issue.getAssignedAt() == null) {
-            issue.setAssignedAt(LocalDateTime.now());
-        }
-
-        if (newStatus == IssueStatus.RESOLVED) {
-            issue.setResolvedAt(LocalDateTime.now());
-        }
-
-        // DB trigger will calculate SLA deadline automatically
-        Issue saved = issueRepository.save(issue);
-
-        // =========================
-        // 3️⃣ Write History Record
-        // =========================
-        IssueHistory history = new IssueHistory();
-        history.setIssueId(saved.getId());
-        history.setOldStatus(oldStatus);
-        history.setNewStatus(newStatus);
-        history.setChangedBy(changedByUserId);
-        history.setChangedAt(LocalDateTime.now());
-        history.setRemarks(remarks);
-
-        issueHistoryRepository.save(history);
-
-        return saved;
-    }
-    
-    private void validateTransition(IssueStatus oldStatus, IssueStatus newStatus) {
-
-        switch (oldStatus) {
-
-            case SUBMITTED -> {
-                if (newStatus != IssueStatus.ASSIGNED) {
-                    throw new IllegalStateException("SUBMITTED can only transition to ASSIGNED");
-                }
-            }
-
-            case ASSIGNED -> {
-                if (newStatus != IssueStatus.IN_PROGRESS) {
-                    throw new IllegalStateException("ASSIGNED can only transition to IN_PROGRESS");
-                }
-            }
-
-            case IN_PROGRESS -> {
-                if (!(newStatus == IssueStatus.RESOLVED ||
-                      newStatus == IssueStatus.ESCALATED)) {
-                    throw new IllegalStateException("IN_PROGRESS can only transition to RESOLVED or ESCALATED");
-                }
-            }
-
-            case ESCALATED -> {
-                if (newStatus != IssueStatus.REASSIGNED) {
-                    throw new IllegalStateException("ESCALATED can only transition to REASSIGNED");
-                }
-            }
-
-            case REASSIGNED -> {
-                if (newStatus != IssueStatus.ASSIGNED) {
-                    throw new IllegalStateException("REASSIGNED must go back to ASSIGNED");
-                }
-            }
-
-            case RESOLVED -> {
-                throw new IllegalStateException("RESOLVED issue is terminal");
-            }
-        }
-    }
-
 }

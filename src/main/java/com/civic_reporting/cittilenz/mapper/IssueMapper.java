@@ -46,9 +46,11 @@ public class IssueMapper {
         // =========================
         // Core
         // =========================
+        response.setId(issue.getId());
         response.setTitle(issue.getTitle());
         response.setDescription(issue.getDescription());
         response.setImageUrl(issue.getImageUrl());
+        response.setResolvedImageUrl(issue.getResolvedImageUrl());
         response.setLatitude(issue.getLatitude());
         response.setLongitude(issue.getLongitude());
 
@@ -87,7 +89,7 @@ public class IssueMapper {
         response.setReportedByName(issue.getReportedByName());
 
         // =========================
-        // Official (Safe + Active Check)
+        // Assigned Official (Active Only)
         // =========================
         if (issue.getAssignedOfficialId() != null) {
 
@@ -95,6 +97,7 @@ public class IssueMapper {
                     userRepository.findByIdAndActiveTrue(issue.getAssignedOfficialId());
 
             official.ifPresent(user -> {
+                response.setAssignedOfficialId(user.getId());
                 response.setAssignedOfficialName(user.getFullName());
                 response.setAssignedOfficialMobile(user.getMobile());
                 response.setAssignedOfficialEmail(user.getEmail());
@@ -102,7 +105,7 @@ public class IssueMapper {
         }
 
         // =========================
-        // Ward Superior (Production Safe)
+        // Ward Superior (Active Only)
         // =========================
         if (issue.getWardId() != null) {
 
@@ -116,19 +119,44 @@ public class IssueMapper {
         }
 
         // =========================
-        // Lifecycle
+        // Lifecycle Core
         // =========================
         response.setStatus(issue.getStatus());
         response.setPriority(issue.getPriority());
         response.setReportCount(issue.getReportCount());
+
         response.setCreatedAt(issue.getCreatedAt());
         response.setAssignedAt(issue.getAssignedAt());
+        response.setStartedAt(issue.getStartedAt());
         response.setResolvedAt(issue.getResolvedAt());
-        response.setSlaDeadline(issue.getSlaDeadline());
-        response.setActive(issue.isActive());
+        response.setEscalatedAt(issue.getEscalatedAt());
+        response.setReassignedAt(issue.getReassignedAt());
+
+        response.setActive(issue.getActive());
 
         // =========================
-        // History (Always Ordered)
+        // SLA Fields (Critical)
+        // =========================
+        response.setSoftSlaDeadline(issue.getSoftSlaDeadline());
+        response.setHardSlaDeadline(issue.getHardSlaDeadline());
+
+        response.setSoftSlaBreached(issue.getSoftSlaBreached());
+        response.setHardSlaBreached(issue.getHardSlaBreached());
+
+        response.setEscalationCount(issue.getEscalationCount());
+        response.setReassignmentCount(issue.getReassignmentCount());
+
+        response.setRequiresSupervisorIntervention(
+                issue.isRequiresSupervisorIntervention()
+        );
+
+        // =========================
+        // Version (Mandatory for Optimistic Locking)
+        // =========================
+        response.setVersion(issue.getVersion());
+
+        // =========================
+        // History (Ordered)
         // =========================
         List<IssueHistoryResponse> historyList =
                 issueHistoryRepository

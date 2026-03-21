@@ -2,13 +2,14 @@ package com.civic_reporting.cittilenz.entity;
 
 import com.civic_reporting.cittilenz.enums.IssuePriority;
 import com.civic_reporting.cittilenz.enums.IssueStatus;
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import jakarta.persistence.*;
 import org.locationtech.jts.geom.Point;
 
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "issues")
@@ -19,6 +20,10 @@ public class Issue {
     private Integer id;
 
     private String title;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @Column(nullable = false)
     private String description;
@@ -48,11 +53,12 @@ public class Issue {
     private String resolvedImageUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "issuestatus")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private IssueStatus status;
-    
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "priority", nullable = false)
     private IssuePriority priority;
 
     @Column(name = "assigned_official_id")
@@ -67,15 +73,37 @@ public class Issue {
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
 
+    @Column(name = "started_at")
+    private LocalDateTime startedAt;
+
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
-    @Column(name = "sla_deadline")
-    private LocalDateTime slaDeadline;
+    @Column(name = "escalated_at")
+    private LocalDateTime escalatedAt;
 
-    @Column(name = "is_active")
-    private boolean active = true;
+    @Column(name = "soft_sla_deadline")
+    private LocalDateTime softSlaDeadline;
 
+    @Column(name = "hard_sla_deadline")
+    private LocalDateTime hardSlaDeadline;
+
+    @Column(name = "soft_sla_breached", nullable = false)
+    private Boolean softSlaBreached = false;
+
+    @Column(name = "hard_sla_breached", nullable = false)
+    private Boolean hardSlaBreached = false;
+
+    @Column(name = "reassignment_count", nullable = false)
+    private Integer reassignmentCount = 0;
+
+    @Column(name = "escalation_count", nullable = false)
+    private Integer escalationCount = 0;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean active = true;
+
+    @JsonIgnore
     @Column(columnDefinition = "geometry(Point,4326)")
     private Point location;
 
@@ -96,6 +124,13 @@ public class Issue {
 
     @Column(name = "reported_by_name", nullable = false)
     private String reportedByName;
+    
+    @Column(name = "requires_supervisor_intervention", nullable = false)
+    private boolean requiresSupervisorIntervention;
+    
+    @Column(name = "reassigned_at")
+    private LocalDateTime reassignedAt;
+
 
 	public Integer getId() {
 		return id;
@@ -111,6 +146,14 @@ public class Issue {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	public Long getVersion() {
+		return version;
+	}
+
+	public void setVersion(Long version) {
+		this.version = version;
 	}
 
 	public String getDescription() {
@@ -185,6 +228,22 @@ public class Issue {
 		this.resolvedImageUrl = resolvedImageUrl;
 	}
 
+	public IssueStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(IssueStatus status) {
+		this.status = status;
+	}
+
+	public IssuePriority getPriority() {
+		return priority;
+	}
+
+	public void setPriority(IssuePriority priority) {
+		this.priority = priority;
+	}
+
 	public Integer getAssignedOfficialId() {
 		return assignedOfficialId;
 	}
@@ -217,6 +276,14 @@ public class Issue {
 		this.assignedAt = assignedAt;
 	}
 
+	public LocalDateTime getStartedAt() {
+		return startedAt;
+	}
+
+	public void setStartedAt(LocalDateTime startedAt) {
+		this.startedAt = startedAt;
+	}
+
 	public LocalDateTime getResolvedAt() {
 		return resolvedAt;
 	}
@@ -225,19 +292,67 @@ public class Issue {
 		this.resolvedAt = resolvedAt;
 	}
 
-	public LocalDateTime getSlaDeadline() {
-		return slaDeadline;
+	public LocalDateTime getEscalatedAt() {
+		return escalatedAt;
 	}
 
-	public void setSlaDeadline(LocalDateTime slaDeadline) {
-		this.slaDeadline = slaDeadline;
+	public void setEscalatedAt(LocalDateTime escalatedAt) {
+		this.escalatedAt = escalatedAt;
 	}
 
-	public boolean isActive() {
+	public LocalDateTime getSoftSlaDeadline() {
+		return softSlaDeadline;
+	}
+
+	public void setSoftSlaDeadline(LocalDateTime softSlaDeadline) {
+		this.softSlaDeadline = softSlaDeadline;
+	}
+
+	public LocalDateTime getHardSlaDeadline() {
+		return hardSlaDeadline;
+	}
+
+	public void setHardSlaDeadline(LocalDateTime hardSlaDeadline) {
+		this.hardSlaDeadline = hardSlaDeadline;
+	}
+
+	public Boolean getSoftSlaBreached() {
+		return softSlaBreached;
+	}
+
+	public void setSoftSlaBreached(Boolean softSlaBreached) {
+		this.softSlaBreached = softSlaBreached;
+	}
+
+	public Boolean getHardSlaBreached() {
+		return hardSlaBreached;
+	}
+
+	public void setHardSlaBreached(Boolean hardSlaBreached) {
+		this.hardSlaBreached = hardSlaBreached;
+	}
+
+	public Integer getReassignmentCount() {
+		return reassignmentCount;
+	}
+
+	public void setReassignmentCount(Integer reassignmentCount) {
+		this.reassignmentCount = reassignmentCount;
+	}
+
+	public Integer getEscalationCount() {
+		return escalationCount;
+	}
+
+	public void setEscalationCount(Integer escalationCount) {
+		this.escalationCount = escalationCount;
+	}
+
+	public Boolean getActive() {
 		return active;
 	}
 
-	public void setActive(boolean active) {
+	public void setActive(Boolean active) {
 		this.active = active;
 	}
 
@@ -337,22 +452,20 @@ public class Issue {
 		this.reportedByName = reportedByName;
 	}
 
-	public IssueStatus getStatus() {
-		return status;
+	public boolean isRequiresSupervisorIntervention() {
+		return requiresSupervisorIntervention;
 	}
 
-	public void setStatus(IssueStatus status) {
-		this.status = status;
+	public void setRequiresSupervisorIntervention(boolean requiresSupervisorIntervention) {
+		this.requiresSupervisorIntervention = requiresSupervisorIntervention;
 	}
-
-	public IssuePriority getPriority() {
-		return priority;
-	}
-
-	public void setPriority(IssuePriority priority) {
-		this.priority = priority;
-	}
-
-    // getters and setters
     
+	 public LocalDateTime getReassignedAt() {
+	        return reassignedAt;
+	    }
+
+	    public void setReassignedAt(LocalDateTime reassignedAt) {
+	        this.reassignedAt = reassignedAt;
+	    }
+
 }

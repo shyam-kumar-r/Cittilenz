@@ -227,7 +227,37 @@
     <artifactId>caffeine</artifactId>
 </dependency>
 
+<dependency>
+    <groupId>net.javacrumbs.shedlock</groupId>
+    <artifactId>shedlock-spring</artifactId>
+    <version>5.10.0</version>
+</dependency>
 
+<dependency>
+    <groupId>net.javacrumbs.shedlock</groupId>
+    <artifactId>shedlock-provider-jdbc-template</artifactId>
+    <version>5.10.0</version>
+</dependency>
+
+<!-- Firebase Admin SDK -->
+<dependency>
+    <groupId>com.google.firebase</groupId>
+    <artifactId>firebase-admin</artifactId>
+    <version>9.2.0</version>
+</dependency>
+
+<!-- Google Auth Library -->
+<dependency>
+    <groupId>com.google.auth</groupId>
+    <artifactId>google-auth-library-oauth2-http</artifactId>
+    <version>1.23.0</version>
+</dependency>
+
+<!-- Jakarta Annotation API (for PostConstruct in Spring Boot 3) -->
+<dependency>
+    <groupId>jakarta.annotation</groupId>
+    <artifactId>jakarta.annotation-api</artifactId>
+</dependency>
     </dependencies>
 
     <!-- ========================= -->

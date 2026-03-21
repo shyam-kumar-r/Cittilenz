@@ -8,7 +8,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class UserPrincipal implements UserDetails, Serializable {
@@ -18,6 +17,9 @@ public class UserPrincipal implements UserDetails, Serializable {
     private final User user;
 
     public UserPrincipal(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null");
+        }
         this.user = user;
     }
 
@@ -25,10 +27,14 @@ public class UserPrincipal implements UserDetails, Serializable {
         return user;
     }
 
+    public Integer getId() {
+        return user.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(
-            (GrantedAuthority) () -> "ROLE_" + user.getRole().name()
+        return List.of(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
     }
 
@@ -42,7 +48,6 @@ public class UserPrincipal implements UserDetails, Serializable {
         return user.getUsername();
     }
 
-    /* 🔐 CRITICAL FLAGS */
     @Override
     public boolean isAccountNonExpired() {
         return user.isActive();
