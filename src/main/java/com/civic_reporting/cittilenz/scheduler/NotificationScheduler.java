@@ -20,13 +20,25 @@ public class NotificationScheduler {
         this.processor = processor;
     }
 
-    @Scheduled(fixedDelayString = "30000")
+    /**
+     * Runs every 30 seconds
+     * Processes notification queue safely
+     */
+    @Scheduled(fixedDelay = 30000)
     public void processNotifications() {
+
+        long start = System.currentTimeMillis();
 
         log.info("Notification worker started");
 
-        processor.processQueue();
+        try {
+            processor.processQueue();
+        } catch (Exception ex) {
+            log.error("Notification processing failed", ex);
+        }
 
-        log.info("Notification worker finished");
+        long duration = System.currentTimeMillis() - start;
+
+        log.info("Notification worker finished in {} ms", duration);
     }
 }

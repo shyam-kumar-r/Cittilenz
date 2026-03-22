@@ -6,6 +6,7 @@ import com.civic_reporting.cittilenz.repository.NotificationRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.EmailService;
 import com.civic_reporting.cittilenz.service.NotificationProcessorService;
+import com.civic_reporting.cittilenz.service.NotificationRouterService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +27,14 @@ public class NotificationProcessorServiceImpl implements NotificationProcessorSe
     private static final int MAX_RETRIES = 3;
 
     private final NotificationRepository notificationRepository;
-    private final UserRepository userRepository;
-    private final EmailService emailService;
+    private final NotificationRouterService notificationRouterService;
 
     public NotificationProcessorServiceImpl(
             NotificationRepository notificationRepository,
-            UserRepository userRepository,
-            EmailService emailService) {
+            NotificationRouterService notificationRouterService) {
 
         this.notificationRepository = notificationRepository;
-        this.userRepository = userRepository;
-        this.emailService = emailService;
+        this.notificationRouterService = notificationRouterService;
     }
 
     @Override
@@ -71,18 +69,9 @@ public class NotificationProcessorServiceImpl implements NotificationProcessorSe
 
     private void processNotification(Notification notification) {
 
-        User user = userRepository.findById(notification.getUserId())
-                .orElseThrow(() ->
-                        new IllegalStateException("User not found for notification"));
+        // 🔥 NO USER FETCH HERE
 
-        if ("EMAIL".equals(notification.getChannel())) {
-
-            emailService.sendEmail(
-                    user.getEmail(),
-                    notification.getTitle(),
-                    notification.getMessage()
-            );
-        }
+        notificationRouterService.route(notification);
 
         notification.setStatus("SENT");
         notification.setSentAt(LocalDateTime.now());
@@ -103,13 +92,9 @@ public class NotificationProcessorServiceImpl implements NotificationProcessorSe
         notification.setLastAttemptAt(LocalDateTime.now());
 
         if (retry >= MAX_RETRIES) {
-
             notification.setStatus("FAILED");
-
         } else {
-
             notification.setStatus("PENDING");
-
         }
 
         notificationRepository.save(notification);

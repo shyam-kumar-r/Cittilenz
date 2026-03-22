@@ -23,52 +23,74 @@ public class NotificationRouterServiceImpl
     private final EmailService emailService;
     private final WebSocketNotificationService websocket;
     private final PushNotificationService pushService;
-    private final UserRepository userRepository;
     private final UserDeviceRepository deviceRepository;
 
     public NotificationRouterServiceImpl(
             EmailService emailService,
             WebSocketNotificationService websocket,
             PushNotificationService pushService,
-            UserRepository userRepository,
             UserDeviceRepository deviceRepository) {
 
         this.emailService = emailService;
         this.websocket = websocket;
         this.pushService = pushService;
-        this.userRepository = userRepository;
         this.deviceRepository = deviceRepository;
     }
 
     @Override
     public void route(Notification notification) {
 
-        User user = userRepository
-                .findById(notification.getUserId())
-                .orElseThrow();
-
         switch (notification.getChannel()) {
 
-            case "EMAIL" ->
+            // ======================================
+            // EMAIL (DECOUPLED — NO USER FETCH)
+            // ======================================
+            case "EMAIL" -> {
 
-                    emailService.sendEmail(
-                            user.getEmail(),
-                            notification.getTitle(),
-                            notification.getMessage()
+                if (notification.getEmail() == null) {
+                    throw new IllegalStateException(
+                            "Email not present in notification"
                     );
+                }
 
-            case "IN_APP" ->
+                emailService.sendEmail(
+                        notification.getEmail(),
+                        notification.getTitle(),
+                        notification.getMessage()
+                );
+            }
 
-                    websocket.pushNotification(
-                            user.getId(),
-                            notification
+            // ======================================
+            // IN-APP (NEEDS USER)
+            // ======================================
+            case "IN_APP" -> {
+
+                if (notification.getUserId() == null) {
+                    throw new IllegalStateException(
+                            "UserId required for IN_APP notification"
                     );
+                }
 
+                websocket.pushNotification(
+                        notification.getUserId(),
+                        notification
+                );
+            }
+
+            // ======================================
+            // PUSH (NEEDS USER DEVICES)
+            // ======================================
             case "PUSH" -> {
+
+                if (notification.getUserId() == null) {
+                    throw new IllegalStateException(
+                            "UserId required for PUSH notification"
+                    );
+                }
 
                 List<UserDevice> devices =
                         deviceRepository.findByUserIdAndActiveTrue(
-                                user.getId()
+                                notification.getUserId()
                         );
 
                 for (UserDevice device : devices) {
@@ -80,6 +102,11 @@ public class NotificationRouterServiceImpl
                     );
                 }
             }
+
+            default -> throw new IllegalStateException(
+                    "Unsupported notification channel: "
+                            + notification.getChannel()
+            );
         }
     }
 }

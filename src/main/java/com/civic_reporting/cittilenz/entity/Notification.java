@@ -45,6 +45,9 @@ public class Notification {
 
     @Column(name="is_active")
     private Boolean active;
+    
+    @Column(name = "email")
+    private String email;
 
 	public Integer getId() {
 		return id;
@@ -156,6 +159,14 @@ public class Notification {
 
 	public void setActive(Boolean active) {
 		this.active = active;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
     
     
