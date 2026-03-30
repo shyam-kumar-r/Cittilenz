@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/issues/**").denyAll()
 
                 .requestMatchers("/internal/**").denyAll()
+                
+                .requestMatchers("/uploads/**").permitAll()
 
                 .anyRequest().authenticated()
             )

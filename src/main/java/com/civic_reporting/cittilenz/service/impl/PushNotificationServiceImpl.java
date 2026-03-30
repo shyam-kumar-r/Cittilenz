@@ -33,7 +33,7 @@ public class PushNotificationServiceImpl
 
         } catch (Exception e) {
 
-            throw new RuntimeException("Push failed", e);
+        	throw new RuntimeException("Push failed for token=" + deviceToken, e);
         }
     }
 }

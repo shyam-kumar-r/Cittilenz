@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+
+<style>
+  @media (prefers-color-scheme: dark) {
+    body { background-color: #0B1220 !important; }
+    .container { background-color: #111827 !important; }
+    .text { color: #E5E7EB !important; }
+    .card { background-color: #1F2937 !important; }
+  }
+</style>
+
+</head>
+
+<body style="margin:0; padding:0; background:#F4F7FB; font-family:Arial, sans-serif;">
+
+<table width="100%">
+<tr>
+<td align="center">
+
+<table width="600" class="container"
+style="background:#ffffff; margin:30px 0; border-radius:16px; overflow:hidden;">
+
+<!-- HEADER -->
+<tr>
+<td align="center"
+style="background:linear-gradient(135deg,#1E3A8A,#0EA5A4); padding:35px; color:white;">
+
+<img th:src="${logoUrl}" width="85"
+style="border-radius:50%; background:white; padding:6px;" />
+
+<h1>Cittilenz</h1>
+<p>Turning What Matters Into Action</p>
+
+</td>
+</tr>
+
+<!-- BODY (FIXED) -->
+<tr>
+<td style="padding:30px;" class="text">
+
+<h2>Hello <span th:text="${name}"></span>,</h2>
+
+<p style="line-height:1.6;">
+We wanted to inform you that your reported issue has been reassigned to another official to ensure faster progress.
+</p>
+
+<p style="line-height:1.6;">
+This step has been taken to improve response time and move your issue toward resolution without further delay.
+</p>
+
+<div style="background:#E0F2FE; padding:16px; border-radius:10px; margin:20px 0;">
+  <p style="margin:0 0 8px 0;">
+    <b>Issue:</b> <span th:text="${issueTitle}"></span>
+  </p>
+  <p style="margin:0;">
+    <b>Status:</b> <span th:text="${status}"></span>
+  </p>
+</div>
+
+<p style="line-height:1.6;">
+The newly assigned official will review and take action on your issue. No action is required from your side at this time.
+</p>
+
+<p style="line-height:1.6;">
+We appreciate your patience and will keep you updated as progress is made.
+</p>
+
+<p style="margin-top:25px; font-size:14px;">
+Regards,<br>
+<b>Team Cittilenz</b>
+</p>
+
+</td>
+</tr>
+
+<!-- FOOTER -->
+<tr>
+<td align="center" style="padding:20px; font-size:12px; color:#999;">
+© 2026 Cittilenz • All rights reserved
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>

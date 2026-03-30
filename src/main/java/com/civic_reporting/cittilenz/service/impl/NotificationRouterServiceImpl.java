@@ -1,10 +1,8 @@
 package com.civic_reporting.cittilenz.service.impl;
 
 import com.civic_reporting.cittilenz.entity.Notification;
-import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.entity.UserDevice;
 
-import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.repository.UserDeviceRepository;
 
 import com.civic_reporting.cittilenz.service.EmailService;
@@ -12,6 +10,8 @@ import com.civic_reporting.cittilenz.service.PushNotificationService;
 import com.civic_reporting.cittilenz.service.WebSocketNotificationService;
 import com.civic_reporting.cittilenz.service.NotificationRouterService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +19,9 @@ import java.util.List;
 @Service
 public class NotificationRouterServiceImpl
         implements NotificationRouterService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(NotificationRouterServiceImpl.class);
 
     private final EmailService emailService;
     private final WebSocketNotificationService websocket;
@@ -40,17 +43,23 @@ public class NotificationRouterServiceImpl
     @Override
     public void route(Notification notification) {
 
-        switch (notification.getChannel()) {
+        String channel = notification.getChannel();
+
+        if (channel == null) {
+            throw new IllegalStateException("Notification channel is null");
+        }
+
+        switch (channel) {
 
             // ======================================
-            // EMAIL (DECOUPLED — NO USER FETCH)
+            // EMAIL
             // ======================================
             case "EMAIL" -> {
 
                 if (notification.getEmail() == null) {
-                    throw new IllegalStateException(
-                            "Email not present in notification"
-                    );
+                    log.error("Email missing for notification id={}",
+                            notification.getId());
+                    throw new IllegalStateException("Email missing");
                 }
 
                 emailService.sendEmail(
@@ -61,14 +70,14 @@ public class NotificationRouterServiceImpl
             }
 
             // ======================================
-            // IN-APP (NEEDS USER)
+            // IN-APP
             // ======================================
             case "IN_APP" -> {
 
                 if (notification.getUserId() == null) {
-                    throw new IllegalStateException(
-                            "UserId required for IN_APP notification"
-                    );
+                    log.error("UserId missing for IN_APP id={}",
+                            notification.getId());
+                    throw new IllegalStateException("UserId missing");
                 }
 
                 websocket.pushNotification(
@@ -78,14 +87,14 @@ public class NotificationRouterServiceImpl
             }
 
             // ======================================
-            // PUSH (NEEDS USER DEVICES)
+            // PUSH
             // ======================================
             case "PUSH" -> {
 
                 if (notification.getUserId() == null) {
-                    throw new IllegalStateException(
-                            "UserId required for PUSH notification"
-                    );
+                    log.error("UserId missing for PUSH id={}",
+                            notification.getId());
+                    throw new IllegalStateException("UserId missing");
                 }
 
                 List<UserDevice> devices =
@@ -104,9 +113,11 @@ public class NotificationRouterServiceImpl
             }
 
             default -> throw new IllegalStateException(
-                    "Unsupported notification channel: "
-                            + notification.getChannel()
+                    "Unsupported channel: " + channel
             );
         }
+
+        log.info("Notification routed id={} channel={}",
+                notification.getId(), channel);
     }
 }

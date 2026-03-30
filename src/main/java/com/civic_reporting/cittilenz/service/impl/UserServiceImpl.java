@@ -33,16 +33,18 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    // 🔥 NEW DEPENDENCIES
     private final NotificationService notificationService;
     private final TemplateService templateService;
     private final NotificationRepository notificationRepository;
 
+    private static final String LOGO_URL =
+            "https://raw.githubusercontent.com/shyam-kumar-r/Cittilenz/master/src/main/resources/static/logo.jpeg";
+
     public UserServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            NotificationService notificationService,
-                           TemplateService templateService, NotificationRepository notificationRepository) {
+                           TemplateService templateService,
+                           NotificationRepository notificationRepository) {
 
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -98,27 +100,15 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         user.setCreatedAt(LocalDateTime.now());
 
-        // ✅ SAVE FIRST (CRITICAL)
         User saved = userRepository.save(user);
 
-        // ✅ BUILD HTML TEMPLATE
-        String html = templateService.build(
-        	    "registration-email",
-        	    Map.of(
-        	        "name", saved.getFullName(),
-        	        "username", saved.getUsername(),
-        	        "email", saved.getEmail(),
-        	        "logoUrl", "https://yourcdn.com/logo.png",
-        	        "actionUrl", "https://yourapp.com/dashboard"
-        	    )
-        	);
-
-        // ✅ SEND NOTIFICATION
+        // ✅ HTML EMAIL
         notificationService.notifyUser(
                 saved.getId(),
                 "Welcome to Cittilenz",
-                html,
-                "USER_REGISTERED"
+                "USER_REGISTERED",
+                "USER_REGISTERED",
+                null // ✅ NO ISSUE
         );
 
         return saved;
@@ -191,11 +181,13 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
+        // ✅ HTML EMAIL
         notificationService.notifyUser(
                 user.getId(),
                 "Password Updated",
-                "Your password has been updated successfully.",
-                "PASSWORD_CHANGED"
+                "PASSWORD_CHANGED",
+                "PASSWORD_CHANGED",
+                null
         );
     }
 
@@ -212,11 +204,13 @@ public class UserServiceImpl implements UserService {
         user.setActive(false);
         userRepository.save(user);
 
+        // ✅ HTML EMAIL
         notificationService.notifyUser(
                 user.getId(),
                 "Account Deactivated",
-                "Your account has been deactivated.",
-                "ACCOUNT_DEACTIVATED"
+                "ACCOUNT_DEACTIVATED",
+                "ACCOUNT_DEACTIVATED",
+                null
         );
 
         SecurityContextHolder.clearContext();
@@ -229,36 +223,34 @@ public class UserServiceImpl implements UserService {
     @PreAuthorize("hasRole('CITIZEN')")
     public void deleteCurrentUser(HttpServletRequest request) {
 
-        System.out.println("DEBUG: deleteCurrentUser called");
-
         User user = getCurrentUser();
-
         ensureCitizenOnly(user);
 
-        // ✅ STORE BEFORE DELETE
         Integer userId = user.getId();
         String email = user.getEmail();
+        String name = user.getFullName();
 
-        // ✅ DELETE USER
+        // ✅ BUILD EMAIL FIRST (fail-safe)
+
         userRepository.delete(user);
 
-        System.out.println("DEBUG: user deleted");
-
-        // ✅ SEND NOTIFICATION (SEPARATE TX)
-        sendDeletionNotification(userId, email);
+        sendDeletionNotification(userId, email, name);
 
         SecurityContextHolder.clearContext();
     }
-    
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void sendDeletionNotification(Integer userId, String email) {
+    public void sendDeletionNotification(Integer userId, String email, String name) {
 
         Notification n = new Notification();
 
-        n.setUserId(userId);  // no FK now → safe
-        n.setEmail(email);    // critical
+        n.setUserId(userId);
+        n.setEmail(email);
         n.setTitle("Account Deleted");
-        n.setMessage("Your account has been permanently deleted.");
+        n.setMessage("ACCOUNT_DELETED");
+        n.setNotificationType("ACCOUNT_DELETED");
+        n.setIssueId(null);
+
         n.setChannel("EMAIL");
         n.setStatus("PENDING");
         n.setRetryCount(0);
@@ -268,23 +260,7 @@ public class UserServiceImpl implements UserService {
         notificationRepository.save(n);
     }
 
-    /* =========================================================
-       TEMPLATE LOADER (SIMPLE VERSION)
-       ========================================================= */
-    private String loadRegistrationTemplate() {
-        return """
-            <html>
-            <body>
-            <h2>Welcome to Cittilenz</h2>
-            <p>Hello <b>{{name}}</b>,</p>
-            <p>Your account has been successfully created.</p>
-            <p><b>Username:</b> {{username}}</p>
-            <p><b>Email:</b> {{email}}</p>
-            </body>
-            </html>
-            """;
-    }
-    
+    /* ========================================================= */
     @Override
     @Transactional
     public User getAuthenticatedUser() {

@@ -46,6 +46,11 @@ public class IssueServiceImpl implements IssueService {
     private final AssignmentService assignmentService;
     private final FileStorageService fileStorageService;
     private final IssueHistoryRepository issueHistoryRepository;
+    private final NotificationService notificationService;
+    private final TemplateService templateService;
+
+    private static final String LOGO_URL =
+    "https://raw.githubusercontent.com/shyam-kumar-r/Cittilenz/master/src/main/resources/static/logo.jpeg";
 
 
     public IssueServiceImpl(
@@ -60,8 +65,9 @@ public class IssueServiceImpl implements IssueService {
             AssignmentService assignmentService,
             FileStorageService fileStorageService,
             IssueEnrichmentService issueEnrichmentService,
-            IssueHistoryRepository issueHistoryRepository
-
+            IssueHistoryRepository issueHistoryRepository,
+            NotificationService notificationService,
+            TemplateService templateService
     ) {
         this.userRepository = userRepository;
         this.issueRepository = issueRepository;
@@ -75,7 +81,8 @@ public class IssueServiceImpl implements IssueService {
         this.fileStorageService = fileStorageService;
         this.issueEnrichmentService = issueEnrichmentService;
         this.issueHistoryRepository = issueHistoryRepository;
-
+        this.notificationService = notificationService;
+        this.templateService = templateService;
     }
 
     @Override
@@ -106,24 +113,23 @@ public class IssueServiceImpl implements IssueService {
 
         // 2️⃣ AI Classification
         IssueType issueType = aiClassificationService.classifyIssue(image);
-
         Integer departmentId = issueType.getDepartment().getId();
         String departmentName = issueType.getDepartment().getName();
 
-        // 3️⃣ Geometry Creation
+        // 3️⃣ Location
         Point location = GeometryUtil.createPoint(
                 request.getLatitude(),
                 request.getLongitude()
         );
 
-        // 4️⃣ Ward Lookup
+        // 4️⃣ Ward
         Ward ward = wardRepository.findWardContainingPoint(location)
                 .orElseThrow(() -> new ResourceNotFoundException("Location outside service area"));
 
         Integer wardId = ward.getId();
         String wardName = ward.getWardName();
 
-        // 5️⃣ Duplicate Detection
+        // 5️⃣ Duplicate
         Optional<Issue> duplicate =
                 duplicateDetectionService.findDuplicate(
                         wardId,
@@ -141,18 +147,25 @@ public class IssueServiceImpl implements IssueService {
                     .findByIssueIdAndUserId(existing.getId(), reporterId)
                     .isEmpty()) {
 
-                IssueReporter issueReporter = new IssueReporter();
-                issueReporter.setIssueId(existing.getId());
-                issueReporter.setUserId(reporterId);
-                issueReporter.setReportedAt(LocalDateTime.now());
-
-                issueReporterRepository.save(issueReporter);
+                IssueReporter map = new IssueReporter();
+                map.setIssueId(existing.getId());
+                map.setUserId(reporterId);
+                map.setReportedAt(LocalDateTime.now());
+                issueReporterRepository.save(map);
             }
+
+            notificationService.notifyUser(
+                    reporterId,
+                    "Issue Linked Successfully",
+                    "ISSUE_LINKED",
+                    "ISSUE_LINKED",
+                    existing.getId()
+            );
 
             return existing;
         }
 
-        // 6️⃣ Assignment (before saving)
+        // 6️⃣ Assignment
         Optional<User> assigned =
                 assignmentService.assignOfficial(wardId, departmentId);
 
@@ -176,94 +189,117 @@ public class IssueServiceImpl implements IssueService {
 
         issue.setPriority(issueType.getPriority());
         issue.setCreatedAt(LocalDateTime.now());
-        issue.setStatus(IssueStatus.SUBMITTED); // default first state
+        issue.setStatus(IssueStatus.SUBMITTED);
+
         issue.setSoftSlaBreached(false);
         issue.setHardSlaBreached(false);
-
         issue.setReassignmentCount(0);
         issue.setEscalationCount(0);
-
         issue.setRequiresSupervisorIntervention(false);
         issue.setActive(true);
 
         String imageUrl = fileStorageService.storeFile(image);
         issue.setImageUrl(imageUrl);
 
-        // If assigned → mark assigned
         if (assigned.isPresent()) {
-            issue.setAssignedOfficialId(assigned.get().getId());
+            Integer officialId = assigned.get().getId();
+            issue.setAssignedOfficialId(officialId);
             issue.setAssignedAt(LocalDateTime.now());
             issue.setStatus(IssueStatus.ASSIGNED);
         }
 
+        // ✅ SAVE FIRST (CRITICAL)
         Issue saved = issueRepository.save(issue);
 
-        // ===============================
-        // 7️⃣ Lifecycle History Logging
-        // ===============================
+        // ================= NOTIFICATIONS (CORRECT ORDER) =================
 
-        // First record (creation)
-        IssueHistory creationHistory = new IssueHistory();
-        creationHistory.setIssueId(saved.getId());
-        creationHistory.setOldStatus(null);
-        creationHistory.setNewStatus(IssueStatus.SUBMITTED);
-        creationHistory.setChangedBy(reporterId);
-        creationHistory.setRemarks("Issue created");
-        creationHistory.setChangedAt(LocalDateTime.now());
+        // CREATED
+        notificationService.notifyUser(
+                reporterId,
+                "Issue Reported Successfully",
+                "ISSUE_CREATED",
+                "ISSUE_CREATED",
+                saved.getId()
+        );
 
-        issueHistoryRepository.save(creationHistory);
-
-        // If assigned immediately → second record
+        // ASSIGNED (if applicable)
         if (assigned.isPresent()) {
 
-            IssueHistory assignmentHistory = new IssueHistory();
-            assignmentHistory.setIssueId(saved.getId());
-            assignmentHistory.setOldStatus(IssueStatus.SUBMITTED);
-            assignmentHistory.setNewStatus(IssueStatus.ASSIGNED);
-            assignmentHistory.setChangedBy(assigned.get().getId());
-            assignmentHistory.setRemarks("Issue assigned to official");
-            assignmentHistory.setChangedAt(LocalDateTime.now());
+            Integer officialId = assigned.get().getId();
 
-            issueHistoryRepository.save(assignmentHistory);
+            notificationService.notifyUser(
+                    reporterId,
+                    "Issue Assigned",
+                    "ISSUE_ASSIGNED",
+                    "ISSUE_ASSIGNED",
+                    saved.getId()
+            );
+
+            notificationService.notifyUser(
+                    officialId,
+                    "New Issue Assigned",
+                    "ISSUE_ASSIGNED",
+                    "ISSUE_ASSIGNED",
+                    saved.getId()
+            );
         }
 
-     // ===============================
-     // 8️⃣ Async Address Enrichment (After Commit Only)
-     // ===============================
+        // ================= HISTORY =================
 
-     TransactionSynchronizationManager.registerSynchronization(
-             new TransactionSynchronization() {
-                 @Override
-                 public void afterCommit() {
-                     issueEnrichmentService.enrichIssueAddress(saved.getId());
-                 }
-             }
-     );
+        IssueHistory creation = new IssueHistory();
+        creation.setIssueId(saved.getId());
+        creation.setOldStatus(null);
+        creation.setNewStatus(IssueStatus.SUBMITTED);
+        creation.setChangedBy(reporterId);
+        creation.setRemarks("Issue created");
+        creation.setChangedAt(LocalDateTime.now());
+        issueHistoryRepository.save(creation);
 
-        // ===============================
-        // 9️⃣ Save Issue Image Mapping
-        // ===============================
-        IssueImage issueImage = new IssueImage();
-        issueImage.setIssueId(saved.getId());
-        issueImage.setImageUrl(saved.getImageUrl());
-        issueImage.setImageType("REPORTED");
-        issueImage.setUploadedBy(reporterId);
-        issueImage.setUploadedAt(LocalDateTime.now());
+        if (assigned.isPresent()) {
 
-        issueImageRepository.save(issueImage);
+            IssueHistory assign = new IssueHistory();
+            assign.setIssueId(saved.getId());
+            assign.setOldStatus(IssueStatus.SUBMITTED);
+            assign.setNewStatus(IssueStatus.ASSIGNED);
+            assign.setChangedBy(assigned.get().getId());
+            assign.setRemarks("Issue assigned");
+            assign.setChangedAt(LocalDateTime.now());
 
-        // ===============================
-        // 🔟 Save Reporter Mapping
-        // ===============================
-        IssueReporter issueReporter = new IssueReporter();
-        issueReporter.setIssueId(saved.getId());
-        issueReporter.setUserId(reporterId);
-        issueReporter.setReportedAt(LocalDateTime.now());
+            issueHistoryRepository.save(assign);
+        }
 
-        issueReporterRepository.save(issueReporter);
+        // ================= ASYNC =================
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        issueEnrichmentService.enrichIssueAddress(saved.getId());
+                    }
+                }
+        );
+
+        // ================= IMAGE =================
+
+        IssueImage img = new IssueImage();
+        img.setIssueId(saved.getId());
+        img.setImageUrl(saved.getImageUrl());
+        img.setImageType("REPORTED");
+        img.setUploadedBy(reporterId);
+        img.setUploadedAt(LocalDateTime.now());
+        issueImageRepository.save(img);
+
+        // ================= REPORTER =================
+
+        IssueReporter rep = new IssueReporter();
+        rep.setIssueId(saved.getId());
+        rep.setUserId(reporterId);
+        rep.setReportedAt(LocalDateTime.now());
+        issueReporterRepository.save(rep);
 
         return saved;
     }
+
 
 
 

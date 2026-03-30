@@ -22,6 +22,7 @@ public class IssueMapper {
     private final IssueTypeRepository issueTypeRepository;
     private final UserRepository userRepository;
     private final AssignmentService assignmentService;
+    private static final String BASE_URL = "http://localhost:8080";
 
     public IssueMapper(
             IssueHistoryRepository issueHistoryRepository,
@@ -49,8 +50,12 @@ public class IssueMapper {
         response.setId(issue.getId());
         response.setTitle(issue.getTitle());
         response.setDescription(issue.getDescription());
-        response.setImageUrl(issue.getImageUrl());
-        response.setResolvedImageUrl(issue.getResolvedImageUrl());
+        response.setImageUrl(BASE_URL + issue.getImageUrl());
+        response.setResolvedImageUrl(
+            issue.getResolvedImageUrl() != null
+                ? BASE_URL + issue.getResolvedImageUrl()
+                : null
+        );
         response.setLatitude(issue.getLatitude());
         response.setLongitude(issue.getLongitude());
 

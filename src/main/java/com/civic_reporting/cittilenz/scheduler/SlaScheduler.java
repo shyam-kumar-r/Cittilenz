@@ -19,7 +19,7 @@ public class SlaScheduler {
         this.slaService = slaService;
     }
 
-    @Scheduled(fixedDelay = 60000) // Every 60 seconds
+    @Scheduled(fixedDelay = 60000)
     @SchedulerLock(
             name = "slaProcessorLock",
             lockAtLeastFor = "PT10S",
@@ -32,7 +32,9 @@ public class SlaScheduler {
         log.info("SLA Scheduler started");
 
         try {
+            // 🔥 THIS inserts notifications into DB
             slaService.processSlaBreaches();
+
         } catch (Exception ex) {
             log.error("SLA Scheduler failed", ex);
         }
@@ -41,9 +43,14 @@ public class SlaScheduler {
 
         log.info("SLA Scheduler finished in {} ms", duration);
     }
-    
+
     @Scheduled(fixedRate = 60000)
     public void processReassignedIssues() {
-        slaService.processReassignedIssues();
+
+        try {
+            slaService.processReassignedIssues();
+        } catch (Exception ex) {
+            log.error("Reassignment processing failed", ex);
+        }
     }
 }

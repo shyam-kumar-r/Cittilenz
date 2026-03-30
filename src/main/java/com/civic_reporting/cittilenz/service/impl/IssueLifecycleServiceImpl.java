@@ -11,6 +11,7 @@ import com.civic_reporting.cittilenz.repository.IssueRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.FileStorageService;
 import com.civic_reporting.cittilenz.service.IssueLifecycleService;
+import com.civic_reporting.cittilenz.service.NotificationService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,17 +35,20 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
     private final IssueHistoryRepository issueHistoryRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final NotificationService notificationService;
 
     public IssueLifecycleServiceImpl(
             IssueRepository issueRepository,
             IssueHistoryRepository issueHistoryRepository,
             UserRepository userRepository,
-            FileStorageService fileStorageService
+            FileStorageService fileStorageService,
+            NotificationService notificationService
     ) {
         this.issueRepository = issueRepository;
         this.issueHistoryRepository = issueHistoryRepository;
         this.userRepository = userRepository;
         this.fileStorageService = fileStorageService;
+        this.notificationService = notificationService;
     }
 
     // ======================================================
@@ -120,6 +124,15 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                 officialId,
                 "Official started work"
         );
+        
+        Integer reporterId = saved.getReportedBy();
+        Integer assignedOfficial = saved.getAssignedOfficialId();
+
+        notificationService.notifyUser(reporterId,
+                "Issue In Progress", "ISSUE_IN_PROGRESS", "ISSUE_IN_PROGRESS", saved.getId());
+
+        notificationService.notifyUser(assignedOfficial,
+                "Work Started on Issue", "ISSUE_IN_PROGRESS", "ISSUE_IN_PROGRESS",saved.getId());
 
         return saved;
     }
@@ -182,7 +195,13 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                 officialId,
                 autoRemark
         );
+        
+        notificationService.notifyUser(saved.getReportedBy(),
+                "Issue Resolved", "ISSUE_RESOLVED", "ISSUE_RESOLVED", saved.getId());
 
+        notificationService.notifyUser(saved.getAssignedOfficialId(),
+                "Issue Closed", "ISSUE_RESOLVED", "ISSUE_RESOLVED", saved.getId());
+        
         return saved;
     }
     // ======================================================
@@ -233,6 +252,10 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
         issue.setReassignedAt(LocalDateTime.now());
         issue.setSoftSlaBreached(false);
         issue.setRequiresSupervisorIntervention(false);
+        issue.setStartedAt(null);
+        issue.setHardSlaDeadline(null);
+        issue.setHardSlaBreached(false);
+        issue.setRequiresSupervisorIntervention(false);
 
         Issue saved = issueRepository.save(issue);
 
@@ -251,6 +274,15 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                 superiorId,
                 autoRemark
         );
+        
+        notificationService.notifyUser(saved.getReportedBy(),
+                "Escalated Issue Processed", "Issue has been Reassigned due to Delay.", "SLA_HARD_ESCALATION_PROCESSED", saved.getId());
+
+        notificationService.notifyUser(newOfficialId,
+                "Escalated Issue Assigned", "Escalated Issue has been Assigned by the Superior.", "SLA_HARD_ESCALATION_PROCESSED", saved.getId());
+
+        notificationService.notifyUser(superiorId,
+                "Escalation Processed", "Reviewed and Reassigned Issue.", "SLA_HARD_ESCALATION_PROCESSED", saved.getId());
 
         return saved;
     }
@@ -292,8 +324,10 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
         issue.setReassignmentCount(0);
         issue.setSoftSlaBreached(false);
         issue.setRequiresSupervisorIntervention(false);
-        issue.setAssignedAt(now);
-        issue.setSoftSlaDeadline(now.plusHours(2));
+        issue.setStartedAt(null);
+        issue.setHardSlaDeadline(null);
+        issue.setHardSlaBreached(false);
+        issue.setRequiresSupervisorIntervention(false);
 
         Issue saved = issueRepository.save(issue);
 
@@ -311,6 +345,15 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                 superiorId,
                 autoRemark
         );
+        
+        notificationService.notifyUser(saved.getReportedBy(),
+                "Issue Reassigned", "SLA_SOFT_BREACH", "SLA_SOFT_BREACH", saved.getId());
+
+        notificationService.notifyUser(newOfficialId,
+                "New Issue Assigned", "SLA_REASSIGNED", "SLA_REASSIGNED", saved.getId());
+
+        notificationService.notifyUser(superiorId,
+                "Supervisor Intervention", "SLA_SUPERVISOR_ALERT", "SLA_SUPERVISOR_ALERT", saved.getId());
 
         return saved;
     }

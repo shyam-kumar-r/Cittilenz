@@ -34,7 +34,8 @@ public class NotificationServiceImpl implements NotificationService {
     public void notifyUser(Integer userId,
                            String title,
                            String message,
-                           String type) {
+                           String type,
+                           Integer issueId) {
 
         boolean emailEnabled = preferenceRepository
                 .findByUserIdAndNotificationType(userId, type)
@@ -45,7 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new IllegalStateException("User not found for notification"));
+                        new IllegalStateException("User not found"));
 
         Notification n = new Notification();
 
@@ -53,6 +54,9 @@ public class NotificationServiceImpl implements NotificationService {
         n.setEmail(user.getEmail());
         n.setTitle(title);
         n.setMessage(message);
+        n.setNotificationType(type);
+        n.setIssueId(issueId); // 🔥 FIX
+
         n.setChannel("EMAIL");
         n.setStatus("PENDING");
         n.setRetryCount(0);

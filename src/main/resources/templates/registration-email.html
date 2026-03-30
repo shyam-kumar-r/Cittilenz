@@ -5,15 +5,10 @@
 
 <style>
   @media (prefers-color-scheme: dark) {
-    body {
-      background-color: #0B1220 !important;
-    }
-    .container {
-      background-color: #111827 !important;
-    }
-    .text {
-      color: #E5E7EB !important;
-    }
+    body { background-color: #0B1220 !important; }
+    .container { background-color: #111827 !important; }
+    .text { color: #E5E7EB !important; }
+    .card { background-color: #1F2937 !important; }
   }
 </style>
 
@@ -25,21 +20,23 @@
 <tr>
 <td align="center">
 
-<!-- MAIN CARD -->
 <table width="600" class="container"
-style="background:#ffffff; margin:30px 0; border-radius:14px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.1);">
+style="background:#ffffff; margin:30px 0; border-radius:16px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.12);">
 
 <!-- HEADER -->
 <tr>
 <td align="center"
-style="background:linear-gradient(135deg,#1E3A8A,#0EA5A4); padding:30px; color:white;">
+style="background:linear-gradient(135deg,#1E3A8A,#0EA5A4); padding:35px 20px; color:white;">
 
 <img th:src="${logoUrl}"
-     width="80"
-     style="border-radius:50%; display:block; margin-bottom:10px;" />
+     width="85"
+     style="display:block; margin-bottom:12px; border-radius:50%; background:white; padding:6px;" />
 
-<h1 style="margin:0;">Welcome to Cittilenz</h1>
-<p style="margin:5px 0 0 0; font-size:14px;">
+<h1 style="margin:0; font-size:26px;">
+Welcome to Cittilenz
+</h1>
+
+<p style="margin:6px 0 0 0; font-size:14px;">
 Turning What Matters Into Action
 </p>
 
@@ -50,49 +47,64 @@ Turning What Matters Into Action
 <tr>
 <td style="padding:30px;" class="text">
 
-<h2>Hello <span th:text="${name}"></span>,</h2>
+<h2 style="margin-top:0;">
+Hello <span th:text="${name}"></span>,
+</h2>
 
-<p style="font-size:15px; line-height:1.6;">
-Your account has been successfully created. You are now part of a system
-that helps improve civic infrastructure and accountability.
+<p style="font-size:15px; line-height:1.7; color:#444;">
+Your account has been successfully created. You are now part of a platform designed to
+report, track, and improve civic issues in your community.
 </p>
 
-<!-- CTA -->
-<div style="text-align:center; margin:25px 0;">
-<a th:href="${actionUrl}"
-style="background:linear-gradient(135deg,#1E3A8A,#0EA5A4);
-color:white;
-padding:14px 30px;
-text-decoration:none;
-border-radius:8px;
-font-weight:bold;">
-Get Started
-</a>
-</div>
+<!-- FEATURES -->
+<table width="100%" style="margin-top:20px;">
+<tr>
+<td class="card" style="padding:15px; border-radius:10px; background:#F4F7FB;">
+📍 <b>Report Issues Instantly</b><br>
+<span style="font-size:13px; color:#666;">
+Raise civic concerns with accurate location tracking.
+</span>
+</td>
+</tr>
 
-<!-- INFO CARDS -->
-<table width="100%">
+<tr><td height="10"></td></tr>
+
 <tr>
-<td style="padding:10px 0;">📍 Report issues instantly</td>
+<td class="card" style="padding:15px; border-radius:10px; background:#F4F7FB;">
+📊 <b>Track Progress Transparently</b><br>
+<span style="font-size:13px; color:#666;">
+Monitor issue status from submission to resolution.
+</span>
+</td>
 </tr>
+
+<tr><td height="10"></td></tr>
+
 <tr>
-<td style="padding:10px 0;">📊 Track resolution progress</td>
-</tr>
-<tr>
-<td style="padding:10px 0;">🤝 Improve your community</td>
+<td class="card" style="padding:15px; border-radius:10px; background:#F4F7FB;">
+🤝 <b>Improve Your Community</b><br>
+<span style="font-size:13px; color:#666;">
+Be part of a system that drives accountability.
+</span>
+</td>
 </tr>
 </table>
 
 <!-- USER INFO -->
-<div style="background:#F4F7FB; padding:15px; border-radius:8px; margin-top:20px;">
-<p style="margin:5px 0;"><b>Username:</b> <span th:text="${username}"></span></p>
-<p style="margin:5px 0;"><b>Email:</b> <span th:text="${email}"></span></p>
+<div style="background:#F4F7FB; padding:18px; border-radius:10px; margin-top:25px;">
+<p><b>Username:</b> <span th:text="${username}"></span></p>
+<p><b>Email:</b> <span th:text="${email}"></span></p>
 </div>
 
 <!-- TRUST -->
 <div style="margin-top:20px; font-size:13px; color:#666;">
-🔒 Your data is used only to improve civic reporting accuracy and service delivery.
+🔒 Your data is securely handled and used only for civic service improvement.
 </div>
+
+<p style="margin-top:25px;font-size:14px;">
+Regards,<br>
+<b>Team Cittilenz</b>
+</p>
 
 </td>
 </tr>
