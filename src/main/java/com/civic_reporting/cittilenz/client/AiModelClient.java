@@ -1,11 +1,13 @@
 package com.civic_reporting.cittilenz.client;
 
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import com.civic_reporting.cittilenz.dto.response.AiResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
 public class AiModelClient {
@@ -19,41 +21,35 @@ public class AiModelClient {
         this.webClient = webClient;
     }
 
-    /**
-     * Calls Python AI microservice to classify issue image.
-     *
-     * Expected AI Response:
-     * {
-     *   "issueTypeId": 3
-     * }
-     */
-    public Integer detectIssueType(MultipartFile image) {
+    public AiResponse predict(MultipartFile file) {
 
-        // ==========================
-        // FUTURE PRODUCTION AI CALL
-        // ==========================
+        try {
 
-        /*
-        Map response = webClient.post()
-                .uri(aiServiceUrl + "/detect")
-                .bodyValue(image.getBytes()) // adjust when API finalized
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
 
-        return (Integer) response.get("issueTypeId");
-        */
+            builder.part("file", new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            });
 
-        // ======================================
-        // MANUAL FALLBACK STARTS HERE
-        // ======================================
+            AiResponse response = webClient.post()
+                    .uri(aiServiceUrl + "/predict")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .bodyValue(builder.build())
+                    .retrieve()
+                    .bodyToMono(AiResponse.class)
+                    .block();
 
-        // Temporary hardcoded issueTypeId for testing
-        // Change this value depending on test case
-        return 1;
+            if (response == null) {
+                throw new IllegalStateException("AI service returned empty response");
+            }
 
-        // ======================================
-        // MANUAL FALLBACK ENDS HERE
-        // ======================================
+            return response;
+
+        } catch (Exception e) {
+            throw new IllegalStateException("AI service unavailable");
+        }
     }
 }

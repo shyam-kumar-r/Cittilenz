@@ -6,9 +6,10 @@ import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.entity.IssueHistory;
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.repository.IssueHistoryRepository;
-import com.civic_reporting.cittilenz.repository.IssueTypeRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.AssignmentService;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,28 +20,26 @@ import java.util.stream.Collectors;
 public class IssueMapper {
 
     private final IssueHistoryRepository issueHistoryRepository;
-    private final IssueTypeRepository issueTypeRepository;
     private final UserRepository userRepository;
     private final AssignmentService assignmentService;
-    private static final String BASE_URL = "http://localhost:8080";
+
+    // 🔥 PRODUCTION SAFE BASE URL
+    @Value("${app.base-url}")
+    private String baseUrl;
 
     public IssueMapper(
             IssueHistoryRepository issueHistoryRepository,
-            IssueTypeRepository issueTypeRepository,
             UserRepository userRepository,
             AssignmentService assignmentService
     ) {
         this.issueHistoryRepository = issueHistoryRepository;
-        this.issueTypeRepository = issueTypeRepository;
         this.userRepository = userRepository;
         this.assignmentService = assignmentService;
     }
 
     public IssueResponse toResponse(Issue issue) {
 
-        if (issue == null) {
-            return null;
-        }
+        if (issue == null) return null;
 
         IssueResponse response = new IssueResponse();
 
@@ -50,22 +49,23 @@ public class IssueMapper {
         response.setId(issue.getId());
         response.setTitle(issue.getTitle());
         response.setDescription(issue.getDescription());
-        response.setImageUrl(BASE_URL + issue.getImageUrl());
-        response.setResolvedImageUrl(
-            issue.getResolvedImageUrl() != null
-                ? BASE_URL + issue.getResolvedImageUrl()
-                : null
+
+        // 🔥 SAFE IMAGE URL
+        response.setImageUrl(
+                issue.getImageUrl() != null ? baseUrl + issue.getImageUrl() : null
         );
+
+        response.setResolvedImageUrl(
+                issue.getResolvedImageUrl() != null
+                        ? baseUrl + issue.getResolvedImageUrl()
+                        : null
+        );
+
         response.setLatitude(issue.getLatitude());
         response.setLongitude(issue.getLongitude());
 
-        // =========================
-        // Issue Type Name (Safe)
-        // =========================
-        if (issue.getIssueTypeId() != null) {
-            issueTypeRepository.findById(issue.getIssueTypeId())
-                    .ifPresent(type -> response.setIssueTypeName(type.getName()));
-        }
+        // 🔥 USE STORED VALUE (NO DB CALL)
+        response.setIssueTypeName(issue.getIssueTypeName());
 
         // =========================
         // Address
@@ -94,7 +94,7 @@ public class IssueMapper {
         response.setReportedByName(issue.getReportedByName());
 
         // =========================
-        // Assigned Official (Active Only)
+        // Assigned Official
         // =========================
         if (issue.getAssignedOfficialId() != null) {
 
@@ -110,7 +110,7 @@ public class IssueMapper {
         }
 
         // =========================
-        // Ward Superior (Active Only)
+        // Ward Superior
         // =========================
         if (issue.getWardId() != null) {
 
@@ -124,7 +124,7 @@ public class IssueMapper {
         }
 
         // =========================
-        // Lifecycle Core
+        // Lifecycle
         // =========================
         response.setStatus(issue.getStatus());
         response.setPriority(issue.getPriority());
@@ -140,7 +140,7 @@ public class IssueMapper {
         response.setActive(issue.getActive());
 
         // =========================
-        // SLA Fields (Critical)
+        // SLA
         // =========================
         response.setSoftSlaDeadline(issue.getSoftSlaDeadline());
         response.setHardSlaDeadline(issue.getHardSlaDeadline());
@@ -156,12 +156,12 @@ public class IssueMapper {
         );
 
         // =========================
-        // Version (Mandatory for Optimistic Locking)
+        // Version
         // =========================
         response.setVersion(issue.getVersion());
 
         // =========================
-        // History (Ordered)
+        // History
         // =========================
         List<IssueHistoryResponse> historyList =
                 issueHistoryRepository

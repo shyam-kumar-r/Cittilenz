@@ -3,12 +3,11 @@ package com.civic_reporting.cittilenz.service.impl;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.civic_reporting.cittilenz.entity.Notification;
 import com.civic_reporting.cittilenz.entity.NotificationPreference;
 import com.civic_reporting.cittilenz.entity.User;
+import com.civic_reporting.cittilenz.exception.ResourceNotFoundException;
 import com.civic_reporting.cittilenz.repository.NotificationPreferenceRepository;
 import com.civic_reporting.cittilenz.repository.NotificationRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
@@ -23,7 +22,8 @@ public class NotificationServiceImpl implements NotificationService {
 
     public NotificationServiceImpl(
             NotificationRepository notificationRepository,
-            NotificationPreferenceRepository preferenceRepository, UserRepository userRepository
+            NotificationPreferenceRepository preferenceRepository,
+            UserRepository userRepository
     ) {
         this.notificationRepository = notificationRepository;
         this.preferenceRepository = preferenceRepository;
@@ -45,8 +45,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (!emailEnabled) return;
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new IllegalStateException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Notification n = new Notification();
 
@@ -55,7 +54,7 @@ public class NotificationServiceImpl implements NotificationService {
         n.setTitle(title);
         n.setMessage(message);
         n.setNotificationType(type);
-        n.setIssueId(issueId); // 🔥 FIX
+        n.setIssueId(issueId);
 
         n.setChannel("EMAIL");
         n.setStatus("PENDING");

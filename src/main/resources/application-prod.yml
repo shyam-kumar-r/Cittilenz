@@ -10,11 +10,37 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
+        format_sql: false
 
+# ===============================
+# 📁 FILE STORAGE (PROD)
+# ===============================
 file:
   storage:
-    location: /var/cittilenz/uploads
+    location: ${FILE_STORAGE_PATH}
 
+# ===============================
+# 🤖 AI SERVICE (PROD)
+# ===============================
 ai:
   service:
     base-url: ${AI_SERVICE_URL}
+
+# ===============================
+# 🌍 APP CONFIG (PROD)
+# ===============================
+app:
+  base-url: ${APP_BASE_URL}
+  cors:
+    allowed-origins:
+      - https://your-frontend-domain.com
+
+# ===============================
+# 🧾 LOGGING (PROD)
+# ===============================
+logging:
+  level:
+    root: INFO
+    com.civic_reporting.cittilenz: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF

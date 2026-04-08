@@ -88,7 +88,9 @@ public class WardSuperiorIssueController {
         Page<IssueResponse> responsePage =
                 pageResult.map(issueMapper::toResponse);
 
-        return ResponseEntity.ok(ApiResponse.success(responsePage));
+        return ResponseEntity.ok(
+        	    ApiResponse.success("Ward issues fetched", responsePage)
+        	);
     }
     
     @GetMapping("/dashboard")
@@ -105,7 +107,9 @@ public class WardSuperiorIssueController {
                         superior.getWardId()
                 );
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(
+        	    ApiResponse.success("Dashboard fetched", response)
+        	);
     }
 
 }

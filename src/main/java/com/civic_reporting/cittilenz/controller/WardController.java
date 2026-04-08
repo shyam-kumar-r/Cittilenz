@@ -1,7 +1,11 @@
 package com.civic_reporting.cittilenz.controller;
 
+import com.civic_reporting.cittilenz.dto.response.ApiResponse;
+import com.civic_reporting.cittilenz.dto.response.WardResponse;
 import com.civic_reporting.cittilenz.mapper.WardMapper;
 import com.civic_reporting.cittilenz.service.WardService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,25 +21,42 @@ public class WardController {
     }
 
     @GetMapping
-    public List<?> getAll() {
-        return wardService.getAllWards()
+    public ResponseEntity<ApiResponse<List<WardResponse>>> getAll() {
+
+        List<WardResponse> list = wardService.getAllWards()
                 .stream()
                 .map(WardMapper::toResponse)
                 .toList();
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Wards fetched", list)
+        );
     }
 
     @GetMapping("/{id}")
-    public Object getById(@PathVariable Integer id) {
-        return WardMapper.toResponse(wardService.getWardById(id));
+    public ResponseEntity<ApiResponse<WardResponse>> getById(
+            @PathVariable Integer id) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        WardMapper.toResponse(wardService.getWardById(id))
+                )
+        );
     }
 
     @GetMapping("/lookup")
-    public Object lookupWard(
+    public ResponseEntity<ApiResponse<WardResponse>> lookupWard(
             @RequestParam double lat,
             @RequestParam double lng
     ) {
-        return WardMapper.toResponse(
-                wardService.findWardByCoordinates(lat, lng)
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Ward lookup successful",
+                        WardMapper.toResponse(
+                                wardService.findWardByCoordinates(lat, lng)
+                        )
+                )
         );
     }
 }

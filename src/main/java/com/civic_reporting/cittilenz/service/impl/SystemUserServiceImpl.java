@@ -2,8 +2,10 @@ package com.civic_reporting.cittilenz.service.impl;
 
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.UserRole;
+import com.civic_reporting.cittilenz.exception.ResourceNotFoundException;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.SystemUserService;
+
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,6 +21,6 @@ public class SystemUserServiceImpl implements SystemUserService {
     public User getSystemUser() {
         return userRepository.findByRole(UserRole.SYSTEM)
                 .orElseThrow(() ->
-                        new IllegalStateException("SYSTEM user not configured in database"));
+                        new ResourceNotFoundException("SYSTEM user not configured"));
     }
 }

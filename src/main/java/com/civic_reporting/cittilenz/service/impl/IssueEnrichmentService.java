@@ -6,6 +6,7 @@ import com.civic_reporting.cittilenz.service.GeocodingService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +31,6 @@ public class IssueEnrichmentService {
         this.geocodingService = geocodingService;
     }
 
-    /**
-     * Runs AFTER issue is committed.
-     * Updates only address fields.
-     */
     @Async
     @Transactional
     public void enrichIssueAddress(Integer issueId) {
@@ -43,15 +40,19 @@ public class IssueEnrichmentService {
             Optional<Issue> optional = issueRepository.findById(issueId);
 
             if (optional.isEmpty()) {
-                log.warn("Issue {} not found during enrichment", issueId);
+                log.warn("Enrichment skipped: issue not found | issueId={}", issueId);
                 return;
             }
 
             Issue issue = optional.get();
 
-            // Skip if already enriched
+            if (issue.getLatitude() == null || issue.getLongitude() == null) {
+                log.warn("Enrichment skipped: missing coordinates | issueId={}", issueId);
+                return;
+            }
+
             if (issue.getCity() != null && issue.getPincode() != null) {
-                log.info("Issue {} already enriched, skipping", issueId);
+                log.info("Enrichment skipped: already enriched | issueId={}", issueId);
                 return;
             }
 
@@ -62,37 +63,24 @@ public class IssueEnrichmentService {
                     );
 
             if (address == null || address.isEmpty()) {
-                log.warn("Geocoding returned empty result for issue {}", issueId);
+                log.warn("Geocoding returned empty | issueId={}", issueId);
                 return;
             }
 
-            if (address.get("street") != null)
-                issue.setStreet(address.get("street"));
-
-            if (address.get("area") != null)
-                issue.setArea(address.get("area"));
-
-            if (address.get("locality") != null)
-                issue.setLocality(address.get("locality"));
-
-            if (address.get("city") != null)
-                issue.setCity(address.get("city"));
-
-            if (address.get("pincode") != null)
-                issue.setPincode(address.get("pincode"));
-
-            if (address.get("state") != null)
-                issue.setState(address.get("state"));
-
-            if (address.get("country") != null)
-                issue.setCountry(address.get("country"));
+            issue.setStreet(address.get("street"));
+            issue.setArea(address.get("area"));
+            issue.setLocality(address.get("locality"));
+            issue.setCity(address.get("city"));
+            issue.setPincode(address.get("pincode"));
+            issue.setState(address.get("state"));
+            issue.setCountry(address.get("country"));
 
             issueRepository.save(issue);
 
-            log.info("Async enrichment completed for issue {}", issueId);
+            log.info("Enrichment success | issueId={}", issueId);
 
         } catch (Exception ex) {
-            log.error("Async enrichment failed for issue {}", issueId, ex);
+            log.error("Enrichment failed | issueId={}", issueId, ex);
         }
     }
 }

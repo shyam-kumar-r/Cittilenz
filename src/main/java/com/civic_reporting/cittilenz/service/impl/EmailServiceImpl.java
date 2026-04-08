@@ -7,6 +7,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,8 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
-    private static final String FROM_EMAIL = "your-email@gmail.com"; // 🔥 CHANGE
+    @Value("${spring.mail.username}")
+    private String fromEmail;
 
     public EmailServiceImpl(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -34,11 +36,9 @@ public class EmailServiceImpl implements EmailService {
             MimeMessageHelper helper =
                     new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.setFrom(FROM_EMAIL);
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
-
-            // ALWAYS HTML (your system is HTML-based now)
             helper.setText(body, true);
 
             mailSender.send(message);
@@ -49,10 +49,7 @@ public class EmailServiceImpl implements EmailService {
 
             log.error("Email failed to send to={} subject={}", to, subject, e);
 
-            throw new RuntimeException(
-                    "Email sending failed for: " + to,
-                    e
-            );
+            throw new IllegalStateException("Email sending failed");
         }
     }
 }

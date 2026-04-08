@@ -1,11 +1,17 @@
 package com.civic_reporting.cittilenz.scheduler;
 
 import com.civic_reporting.cittilenz.service.SlaService;
+
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class SlaScheduler {
@@ -27,30 +33,65 @@ public class SlaScheduler {
     )
     public void runSlaProcessor() {
 
+        String traceId = UUID.randomUUID().toString();
+        MDC.put("traceId", traceId);
+
         long start = System.currentTimeMillis();
 
-        log.info("SLA Scheduler started");
+        log.info("SlaScheduler START | traceId={}", traceId);
 
         try {
-            // 🔥 THIS inserts notifications into DB
             slaService.processSlaBreaches();
 
+            long duration = System.currentTimeMillis() - start;
+
+            log.info("SlaScheduler SUCCESS | traceId={} | duration={} ms",
+                    traceId, duration);
+
         } catch (Exception ex) {
-            log.error("SLA Scheduler failed", ex);
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.error("SlaScheduler FAILED | traceId={} | duration={} ms",
+                    traceId, duration, ex);
+
+        } finally {
+            MDC.clear();
         }
-
-        long duration = System.currentTimeMillis() - start;
-
-        log.info("SLA Scheduler finished in {} ms", duration);
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedDelay = 60000)
+    @SchedulerLock(
+            name = "reassignmentProcessorLock",
+            lockAtLeastFor = "PT10S",
+            lockAtMostFor = "PT2M"
+    )
     public void processReassignedIssues() {
+
+        String traceId = UUID.randomUUID().toString();
+        MDC.put("traceId", traceId);
+
+        long start = System.currentTimeMillis();
+
+        log.info("ReassignmentScheduler START | traceId={}", traceId);
 
         try {
             slaService.processReassignedIssues();
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.info("ReassignmentScheduler SUCCESS | traceId={} | duration={} ms",
+                    traceId, duration);
+
         } catch (Exception ex) {
-            log.error("Reassignment processing failed", ex);
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.error("ReassignmentScheduler FAILED | traceId={} | duration={} ms",
+                    traceId, duration, ex);
+
+        } finally {
+            MDC.clear();
         }
     }
 }

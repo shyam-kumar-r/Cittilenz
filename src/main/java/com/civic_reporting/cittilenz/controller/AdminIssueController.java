@@ -73,16 +73,20 @@ public class AdminIssueController {
         Page<IssueResponse> responsePage =
                 pageResult.map(issueMapper::toResponse);
 
-        return ResponseEntity.ok(ApiResponse.success(responsePage));
+        return ResponseEntity.ok(
+                ApiResponse.success("Issues fetched successfully", responsePage)
+        );
     }
     
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<AdminDashboardResponse>> getDashboard() {
 
-        AdminDashboardResponse response =
-                dashboardAnalyticsService.getAdminDashboard();
-
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Dashboard data fetched successfully",
+                        dashboardAnalyticsService.getAdminDashboard()
+                )
+        );
     }
 
 }

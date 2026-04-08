@@ -30,6 +30,9 @@ public class Issue {
 
     @Column(name = "issue_type_id")
     private Integer issueTypeId;
+    
+    @Column(name = "issue_type_name")
+    private String issueTypeName;
 
     @Column(name = "department_id")
     private Integer departmentId;
@@ -467,5 +470,13 @@ public class Issue {
 	    public void setReassignedAt(LocalDateTime reassignedAt) {
 	        this.reassignedAt = reassignedAt;
 	    }
+
+		public String getIssueTypeName() {
+			return issueTypeName;
+		}
+
+		public void setIssueTypeName(String issueTypeName) {
+			this.issueTypeName = issueTypeName;
+		}
 
 }

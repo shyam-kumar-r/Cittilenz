@@ -289,6 +289,10 @@ public class IssueQueryServiceImpl implements IssueQueryService {
 
         Integer effectiveWardId = wardId;
         Integer effectiveDepartmentId = departmentId;
+        
+        if (role == null) {
+            throw new IllegalArgumentException("User role is required");
+        }
 
         if (role == UserRole.OFFICIAL) {
 

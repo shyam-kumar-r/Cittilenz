@@ -315,34 +315,35 @@ public interface IssueRepository extends
     		long countReassignedAtLeastOnce();
     
     @Query(value = """
-    		SELECT
-    		COUNT(i) as total,
+    	    SELECT
+    	        COUNT(*) as total,
 
-    		SUM(CASE WHEN i.status = 'ASSIGNED' THEN 1 ELSE 0 END) as assigned,
-    		SUM(CASE WHEN i.status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress,
-    		SUM(CASE WHEN i.status = 'RESOLVED' THEN 1 ELSE 0 END) as resolved,
-    		SUM(CASE WHEN i.status = 'ESCALATED' THEN 1 ELSE 0 END) as escalated,
+    	        SUM(CASE WHEN status = 'ASSIGNED' THEN 1 ELSE 0 END) as assigned,
+    	        SUM(CASE WHEN status = 'IN_PROGRESS' THEN 1 ELSE 0 END) as inProgress,
+    	        SUM(CASE WHEN status = 'RESOLVED' THEN 1 ELSE 0 END) as resolved,
+    	        SUM(CASE WHEN status = 'ESCALATED' THEN 1 ELSE 0 END) as escalated,
 
-    		SUM(CASE WHEN i.softSlaBreached = true THEN 1 ELSE 0 END) as softBreached,
-    		SUM(CASE WHEN i.hardSlaBreached = true THEN 1 ELSE 0 END) as hardBreached,
-    		SUM(CASE WHEN i.requiresSupervisorIntervention = true THEN 1 ELSE 0 END) as supervisorRequired,
+    	        SUM(CASE WHEN soft_sla_breached = true THEN 1 ELSE 0 END) as softBreached,
+    	        SUM(CASE WHEN hard_sla_breached = true THEN 1 ELSE 0 END) as hardBreached,
+    	        SUM(CASE WHEN requires_supervisor_intervention = true THEN 1 ELSE 0 END) as supervisorRequired,
 
-    		AVG(CASE WHEN i.startedAt IS NOT NULL AND i.assignedAt IS NOT NULL
-    		THEN EXTRACT(EPOCH FROM (i.startedAt - i.assignedAt))/60 ELSE NULL END) as avgAckMinutes,
+    	        AVG(CASE WHEN started_at IS NOT NULL AND assigned_at IS NOT NULL
+    	            THEN EXTRACT(EPOCH FROM (started_at - assigned_at))/60 ELSE NULL END) as avgAckMinutes,
 
-    		AVG(CASE WHEN i.resolvedAt IS NOT NULL AND i.startedAt IS NOT NULL
-    		THEN EXTRACT(EPOCH FROM (i.resolvedAt - i.startedAt))/60 ELSE NULL END) as avgResolutionMinutes,
+    	        AVG(CASE WHEN resolved_at IS NOT NULL AND started_at IS NOT NULL
+    	            THEN EXTRACT(EPOCH FROM (resolved_at - started_at))/60 ELSE NULL END) as avgResolutionMinutes,
 
-    		SUM(CASE WHEN i.escalationCount > 0 THEN 1 ELSE 0 END) as escalatedOnce,
-    		SUM(CASE WHEN i.reassignmentCount > 0 THEN 1 ELSE 0 END) as reassignedOnce
+    	        SUM(CASE WHEN escalation_count > 0 THEN 1 ELSE 0 END) as escalatedOnce,
+    	        SUM(CASE WHEN reassignment_count > 0 THEN 1 ELSE 0 END) as reassignedOnce
 
-    		FROM Issue i
-    		WHERE
-    		(:wardId IS NULL OR i.wardId = :wardId)
-    		AND (:departmentId IS NULL OR i.departmentId = :departmentId)
-    		AND (:fromDate IS NULL OR i.createdAt >= :fromDate)
-    		AND (:toDate IS NULL OR i.createdAt <= :toDate)
-    		""", nativeQuery = true)
+    	    FROM issues
+
+    	    WHERE
+    (:wardId IS NULL OR ward_id = :wardId)
+    AND (:departmentId IS NULL OR department_id = :departmentId)
+    AND (CAST(:fromDate AS TIMESTAMP) IS NULL OR created_at >= :fromDate)
+    AND (CAST(:toDate AS TIMESTAMP) IS NULL OR created_at <= :toDate)
+    	""", nativeQuery = true)
     		SlaAggregateProjection getAggregatedAnalytics(
     		        Integer wardId,
     		        Integer departmentId,

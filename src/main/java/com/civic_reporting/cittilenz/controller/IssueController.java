@@ -1,33 +1,21 @@
 package com.civic_reporting.cittilenz.controller;
 
 import com.civic_reporting.cittilenz.dto.request.IssueCreateRequest;
-import com.civic_reporting.cittilenz.dto.response.ApiResponse;
-import com.civic_reporting.cittilenz.dto.response.CitizenDashboardResponse;
-import com.civic_reporting.cittilenz.dto.response.DashboardAnalyticsResponse;
-import com.civic_reporting.cittilenz.dto.response.IssueResponse;
+import com.civic_reporting.cittilenz.dto.response.*;
 import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.entity.User;
-import com.civic_reporting.cittilenz.enums.UserRole;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
 import com.civic_reporting.cittilenz.repository.UserRepository;
-import com.civic_reporting.cittilenz.service.DashboardAnalyticsService;
-import com.civic_reporting.cittilenz.service.IssueQueryService;
-import com.civic_reporting.cittilenz.service.IssueService;
+import com.civic_reporting.cittilenz.service.*;
 
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/issues")
@@ -53,9 +41,6 @@ public class IssueController {
         this.dashboardAnalyticsService = dashboardAnalyticsService;
     }
 
-    // =========================
-    // POST /issues
-    // =========================
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<ApiResponse<IssueResponse>> createIssue(
             @Valid @ModelAttribute IssueCreateRequest request,
@@ -65,11 +50,7 @@ public class IssueController {
 
         User user = getCurrentUser(authentication);
 
-        Issue issue = issueService.createIssue(
-                request,
-                image,
-                user.getId()
-        );
+        Issue issue = issueService.createIssue(request, image, user.getId());
 
         IssueResponse response =
                 issueQueryService.getIssueResponse(issue.getId());
@@ -79,9 +60,6 @@ public class IssueController {
         );
     }
 
-    // =========================
-    // GET /issues/{id}
-    // =========================
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<IssueResponse>> getIssue(
             @PathVariable Integer id,
@@ -90,23 +68,15 @@ public class IssueController {
 
         User user = getCurrentUser(authentication);
 
-        issueService.getIssueById(
-                id,
-                user.getId(),
-                user.getRole()
-        );
+        issueService.getIssueById(id, user.getId(), user.getRole());
 
-        IssueResponse response =
-                issueQueryService.getIssueResponse(id);
+        IssueResponse response = issueQueryService.getIssueResponse(id);
 
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                ApiResponse.success("Issue fetched successfully", response)
         );
     }
 
-    // =========================
-    // GET /issues/my
-    // =========================
     @RateLimiter(name = "issueFilterLimiter")
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<Page<IssueResponse>>> getMyIssues(
@@ -119,12 +89,7 @@ public class IssueController {
 
         User user = getCurrentUser(authentication);
 
-        // Build pageable safely
-        Sort sort = Sort.by(
-                Sort.Direction.fromString(direction),
-                sortBy
-        );
-
+        Sort sort = Sort.by(Sort.Direction.fromString(direction), sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
 
         Page<IssueResponse> response = issueQueryService
@@ -132,31 +97,25 @@ public class IssueController {
                 .map(issueMapper::toResponse);
 
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                ApiResponse.success("User issues fetched", response)
         );
     }
 
-    
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<CitizenDashboardResponse>> getDashboard(
             Authentication authentication
     ) {
 
-        User citizen = userRepository
-                .findByUsernameAndActiveTrue(authentication.getName())
-                .orElseThrow(() -> new IllegalStateException("User not found"));
+        User citizen = getCurrentUser(authentication);
 
         CitizenDashboardResponse response =
                 dashboardAnalyticsService.getCitizenDashboard(citizen.getId());
 
         return ResponseEntity.ok(
-                ApiResponse.success(response)
+                ApiResponse.success("Dashboard fetched", response)
         );
     }
 
-    // =========================
-    // POST /issues/{id}/duplicate
-    // =========================
     @PostMapping("/{id}/duplicate")
     public ResponseEntity<ApiResponse<IssueResponse>> linkDuplicate(
             @PathVariable Integer id,
@@ -168,17 +127,19 @@ public class IssueController {
         Issue issue = issueService.linkDuplicate(id, user.getId());
 
         return ResponseEntity.ok(
-                ApiResponse.success("Duplicate linked", issueMapper.toResponse(issue))
+                ApiResponse.success("Duplicate linked successfully",
+                        issueMapper.toResponse(issue))
         );
     }
 
     private User getCurrentUser(Authentication authentication) {
 
+        if (authentication == null || authentication.getName() == null) {
+            throw new IllegalStateException("Unauthorized");
+        }
+
         return userRepository
                 .findByUsernameAndActiveTrue(authentication.getName())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("User not found"));
     }
-
-    
-    
 }

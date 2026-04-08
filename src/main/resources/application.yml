@@ -15,21 +15,16 @@ spring:
 
   jpa:
     open-in-view: false
-    show-sql: true
     properties:
       hibernate:
-        format_sql: true
         globally_quoted_identifiers: true
-
-
 
 server:
   port: 8080
 
 # ===============================
-# 🔒 Rate Limiter Configuration
+# 🔒 Rate Limiter
 # ===============================
-
 resilience4j:
   ratelimiter:
     instances:
@@ -38,6 +33,42 @@ resilience4j:
         limitRefreshPeriod: 1s
         timeoutDuration: 0
 
+# ===============================
+# ⏱ SLA Scheduler
+# ===============================
 sla:
   scheduler:
     delay: 300000
+
+# ===============================
+# 🌍 APP CONFIG (COMMON)
+# ===============================
+app:
+  base-url: http://localhost:8080
+
+# ===============================
+# 📍 GEOCODING
+# ===============================
+geocoding:
+  enabled: true
+  provider: nominatim
+  rate-limit-per-second: 1
+  timeout-ms: 5000
+  user-agent: "cittilenz-backend/1.0 (shyamkumar71521@gmail.com)"
+  base-url: "https://nominatim.openstreetmap.org/reverse"
+
+# ===============================
+# 🔐 JWT
+# ===============================
+jwt:
+  secret: 18AzTg94Ox9oB1eqLMDNKJDkp/FetuLv7ycYhpCNsUSKYx7Y5ukt5veUYAwpx7vApSn1C1lvPP27rUMGfskhVQ==
+  expiration: 86400000
+
+# ===============================
+# 🧾 LOGGING (GLOBAL)
+# ===============================
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: OFF
+    org.hibernate.type.descriptor.sql.BasicBinder: OFF

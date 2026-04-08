@@ -5,7 +5,9 @@ import com.civic_reporting.cittilenz.entity.GeocodeCache;
 import com.civic_reporting.cittilenz.repository.GeocodeCacheRepository;
 import com.civic_reporting.cittilenz.service.GeocodingService;
 import com.civic_reporting.cittilenz.util.GeoHashUtil;
+
 import io.github.resilience4j.ratelimiter.RateLimiter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,19 +54,21 @@ public class GeocodingServiceImpl implements GeocodingService {
             }
 
             // 2️⃣ RATE LIMIT ENFORCEMENT
-            Supplier<Map> decoratedSupplier =
+            Supplier<Map<String, Object>> decoratedSupplier =
                     RateLimiter.decorateSupplier(rateLimiter,
                             () -> nominatimClient.reverseGeocode(latitude, longitude));
 
-            Map response = decoratedSupplier.get();
+            Map<String, Object> response = decoratedSupplier.get();
 
             if (response == null || response.get("address") == null) {
                 log.warn("Geocoding returned empty response.");
                 return null;
             }
 
-            Map address = (Map) response.get("address");
-            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> address =
+                    (Map<String, Object>) response.get("address");
+
             log.info("Reverse geocoding response: {}", address);
 
             Map<String, String> result = extractAddress(address);
@@ -74,30 +78,44 @@ public class GeocodingServiceImpl implements GeocodingService {
             return result;
 
         } catch (Exception ex) {
-            // 3️⃣ FAIL SAFE — NEVER BREAK ISSUE CREATION
+            // FAIL SAFE — NEVER BREAK ISSUE CREATION
             log.warn("Geocoding failed. Continuing without enrichment.", ex);
             return null;
         }
     }
 
-    private Map<String, String> extractAddress(Map address) {
+    // ==============================
+    // SAFE EXTRACTION
+    // ==============================
+
+    private Map<String, String> extractAddress(Map<String, Object> address) {
 
         Map<String, String> result = new HashMap<>();
 
-        result.put("street", (String) address.get("road"));
-        result.put("area", (String) address.get("suburb"));
-        result.put("locality", (String) address.get("city_district"));
-        result.put("city", (String) address.get("city"));
-        result.put("pincode", (String) address.get("postcode"));
-        result.put("state", (String) address.get("state"));
-        result.put("country", (String) address.get("country"));
+        result.put("street", getString(address, "road"));
+        result.put("area", getString(address, "suburb"));
+        result.put("locality", getString(address, "city_district"));
+        result.put("city", getString(address, "city"));
+        result.put("pincode", getString(address, "postcode"));
+        result.put("state", getString(address, "state"));
+        result.put("country", getString(address, "country"));
 
         return result;
     }
 
+    private String getString(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+        return value != null ? value.toString() : null;
+    }
+
+    // ==============================
+    // CACHE MAPPING
+    // ==============================
+
     private Map<String, String> mapFromCache(GeocodeCache geo) {
 
         Map<String, String> result = new HashMap<>();
+
         result.put("street", geo.getStreet());
         result.put("area", geo.getArea());
         result.put("locality", geo.getLocality());
@@ -109,15 +127,21 @@ public class GeocodingServiceImpl implements GeocodingService {
         return result;
     }
 
+    // ==============================
+    // CACHE SAVE
+    // ==============================
+
     private void saveToCache(String hash,
-                             Double lat,
-                             Double lon,
-                             Map<String, String> data) {
+                            Double lat,
+                            Double lon,
+                            Map<String, String> data) {
 
         GeocodeCache cache = new GeocodeCache();
+
         cache.setLat(lat);
         cache.setLon(lon);
         cache.setLatLonHash(hash);
+
         cache.setStreet(data.get("street"));
         cache.setArea(data.get("area"));
         cache.setLocality(data.get("locality"));
@@ -125,12 +149,13 @@ public class GeocodingServiceImpl implements GeocodingService {
         cache.setPincode(data.get("pincode"));
         cache.setState(data.get("state"));
         cache.setCountry(data.get("country"));
+
         cache.setCreatedAt(LocalDateTime.now());
 
         try {
             geocodeCacheRepository.save(cache);
         } catch (Exception ignored) {
-            // Race condition safe
+            // race condition safe
         }
     }
 }

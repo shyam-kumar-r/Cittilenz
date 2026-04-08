@@ -135,6 +135,7 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                 "Work Started on Issue", "ISSUE_IN_PROGRESS", "ISSUE_IN_PROGRESS",saved.getId());
 
         return saved;
+        
     }
 
     // ======================================================
@@ -164,7 +165,7 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
             throw new IllegalArgumentException("Resolution image is required");
         }
 
-        if (!image.getContentType().startsWith("image/")) {
+        if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
             throw new IllegalArgumentException("Only image files allowed");
         }
 
@@ -251,7 +252,6 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
         issue.setStatus(IssueStatus.REASSIGNED);
         issue.setReassignedAt(LocalDateTime.now());
         issue.setSoftSlaBreached(false);
-        issue.setRequiresSupervisorIntervention(false);
         issue.setStartedAt(null);
         issue.setHardSlaDeadline(null);
         issue.setHardSlaBreached(false);
@@ -449,9 +449,9 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
 
     private void validateVersion(Long current, Long incoming) {
 
-        if (current == null || incoming == null || !current.equals(incoming)) {
-            throw new IllegalStateException("Version conflict. Refresh required.");
-        }
+    	if (incoming == null || !incoming.equals(current)) {
+    	    throw new IllegalStateException("Version conflict. Refresh required.");
+    	}
     }
 
     private void validateTransition(IssueStatus current, IssueStatus next) {

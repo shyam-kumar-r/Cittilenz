@@ -40,7 +40,7 @@ public class IssueServiceImpl implements IssueService {
     private final IssueEnrichmentService issueEnrichmentService;
 
 
-    private final AiClassificationService aiClassificationService;
+
     private final GeocodingService geocodingService;
     private final DuplicateDetectionService duplicateDetectionService;
     private final AssignmentService assignmentService;
@@ -48,6 +48,7 @@ public class IssueServiceImpl implements IssueService {
     private final IssueHistoryRepository issueHistoryRepository;
     private final NotificationService notificationService;
     private final TemplateService templateService;
+    private final IssueTypeRepository issueTypeRepository;
 
     private static final String LOGO_URL =
     "https://raw.githubusercontent.com/shyam-kumar-r/Cittilenz/master/src/main/resources/static/logo.jpeg";
@@ -59,7 +60,6 @@ public class IssueServiceImpl implements IssueService {
             IssueImageRepository issueImageRepository,
             IssueReporterRepository issueReporterRepository,
             WardRepository wardRepository,
-            AiClassificationService aiClassificationService,
             GeocodingService geocodingService,
             DuplicateDetectionService duplicateDetectionService,
             AssignmentService assignmentService,
@@ -67,14 +67,14 @@ public class IssueServiceImpl implements IssueService {
             IssueEnrichmentService issueEnrichmentService,
             IssueHistoryRepository issueHistoryRepository,
             NotificationService notificationService,
-            TemplateService templateService
+            TemplateService templateService,
+            IssueTypeRepository issueTypeRepository
     ) {
         this.userRepository = userRepository;
         this.issueRepository = issueRepository;
         this.issueImageRepository = issueImageRepository;
         this.issueReporterRepository = issueReporterRepository;
         this.wardRepository = wardRepository;
-        this.aiClassificationService = aiClassificationService;
         this.geocodingService = geocodingService;
         this.duplicateDetectionService = duplicateDetectionService;
         this.assignmentService = assignmentService;
@@ -83,6 +83,7 @@ public class IssueServiceImpl implements IssueService {
         this.issueHistoryRepository = issueHistoryRepository;
         this.notificationService = notificationService;
         this.templateService = templateService;
+        this.issueTypeRepository = issueTypeRepository;
     }
 
     @Override
@@ -102,6 +103,8 @@ public class IssueServiceImpl implements IssueService {
             MultipartFile image,
             Integer reporterId
     ) {
+    	
+    	log.info("Create issue started | reporterId={}", reporterId);
 
         // 1️⃣ Validate Reporter
         User reporter = userRepository.findByIdAndActiveTrue(reporterId)
@@ -112,9 +115,22 @@ public class IssueServiceImpl implements IssueService {
         }
 
         // 2️⃣ AI Classification
-        IssueType issueType = aiClassificationService.classifyIssue(image);
+        if (request.getIssueTypeId() == null) {
+            throw new IllegalArgumentException("Issue type is required");
+        }
+        
+        IssueType issueType = issueTypeRepository
+                .findById(request.getIssueTypeId())
+                .filter(IssueType::isActive)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or inactive issue type"));
+        
         Integer departmentId = issueType.getDepartment().getId();
+        
         String departmentName = issueType.getDepartment().getName();
+        
+        if (request.getLatitude() == null || request.getLongitude() == null) {
+            throw new IllegalArgumentException("Location (latitude and longitude coordinates) is required");
+        }
 
         // 3️⃣ Location
         Point location = GeometryUtil.createPoint(
@@ -178,6 +194,7 @@ public class IssueServiceImpl implements IssueService {
         issue.setLocation(location);
 
         issue.setIssueTypeId(issueType.getId());
+        issue.setIssueTypeName(issueType.getName());
         issue.setDepartmentId(departmentId);
         issue.setDepartmentName(departmentName);
 
@@ -197,6 +214,10 @@ public class IssueServiceImpl implements IssueService {
         issue.setEscalationCount(0);
         issue.setRequiresSupervisorIntervention(false);
         issue.setActive(true);
+        
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image is required");
+        }
 
         String imageUrl = fileStorageService.storeFile(image);
         issue.setImageUrl(imageUrl);
@@ -296,7 +317,9 @@ public class IssueServiceImpl implements IssueService {
         rep.setUserId(reporterId);
         rep.setReportedAt(LocalDateTime.now());
         issueReporterRepository.save(rep);
-
+        
+        log.info("Issue created successfully | issueId={}", saved.getId());
+        
         return saved;
     }
 
@@ -369,7 +392,7 @@ public class IssueServiceImpl implements IssueService {
         issueReporter.setReportedAt(LocalDateTime.now());
 
         issueReporterRepository.save(issueReporter);
-
         return issue;
+        
     }
 }

@@ -1,128 +1,135 @@
 package com.civic_reporting.cittilenz.controller;
 
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import com.civic_reporting.cittilenz.dto.request.AnalyticsFilterRequest;
+import com.civic_reporting.cittilenz.dto.response.ApiResponse;
 import com.civic_reporting.cittilenz.dto.response.SlaAnalyticsResponse;
-import com.civic_reporting.cittilenz.service.SlaAnalyticsService;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import jakarta.validation.constraints.Min;
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.enums.UserRole;
 import com.civic_reporting.cittilenz.repository.UserRepository;
+import com.civic_reporting.cittilenz.security.UserPrincipal;
+import com.civic_reporting.cittilenz.service.SlaAnalyticsService;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-
-
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/analytics")
 @PreAuthorize("hasAnyRole('ADMIN','WARD_SUPERIOR')")
 public class SlaAnalyticsController {
 
-	private final SlaAnalyticsService analyticsService;
-	private final UserRepository userRepository;
+    private final SlaAnalyticsService analyticsService;
+    private final UserRepository userRepository;
 
-	public SlaAnalyticsController(
-	        SlaAnalyticsService analyticsService,
-	        UserRepository userRepository
-	) {
-	    this.analyticsService = analyticsService;
-	    this.userRepository = userRepository;
-	}
+    public SlaAnalyticsController(
+            SlaAnalyticsService analyticsService,
+            UserRepository userRepository
+    ) {
+        this.analyticsService = analyticsService;
+        this.userRepository = userRepository;
+    }
 
     @GetMapping("/sla")
-    public SlaAnalyticsResponse getSlaAnalytics() {
-        return analyticsService.getOverallAnalytics();
+    public ResponseEntity<ApiResponse<SlaAnalyticsResponse>> getSlaAnalytics() {
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "SLA analytics fetched",
+                        analyticsService.getOverallAnalytics()
+                )
+        );
     }
-    
+
     @PostMapping("/sla/filter")
-    public SlaAnalyticsResponse getFilteredAnalytics(
-            @RequestBody AnalyticsFilterRequest filter
+    public ResponseEntity<ApiResponse<SlaAnalyticsResponse>> getFilteredAnalytics(
+            @Valid @RequestBody AnalyticsFilterRequest filter
     ) {
-        return analyticsService.getFilteredAnalytics(filter);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Filtered SLA analytics fetched",
+                        analyticsService.getFilteredAnalytics(filter)
+                )
+        );
     }
-    
- // =========================================================
-    // LAST 7 DAYS
-    // =========================================================
 
     @GetMapping("/last7")
-    public SlaAnalyticsResponse last7DaysAnalytics(
-            @RequestParam(required = false) @Min(1) Integer wardId,
-            @RequestParam(required = false) @Min(1) Integer departmentId,
+    public ResponseEntity<ApiResponse<SlaAnalyticsResponse>> last7DaysAnalytics(
+            @RequestParam(required = false) Integer wardId,
+            @RequestParam(required = false) Integer departmentId,
             Authentication authentication
     ) {
 
         User currentUser = extractUser(authentication);
-
         Integer effectiveWardId = resolveWardScope(currentUser, wardId);
 
-        return analyticsService.getLast7DaysAnalytics(
-                effectiveWardId,
-                departmentId
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Last 7 days analytics",
+                        analyticsService.getLast7DaysAnalytics(
+                                effectiveWardId, departmentId
+                        )
+                )
         );
     }
-
-    // =========================================================
-    // LAST 30 DAYS
-    // =========================================================
 
     @GetMapping("/last30")
-    public SlaAnalyticsResponse last30DaysAnalytics(
+    public ResponseEntity<ApiResponse<SlaAnalyticsResponse>> last30DaysAnalytics(
             @RequestParam(required = false) @Min(1) Integer wardId,
             @RequestParam(required = false) @Min(1) Integer departmentId,
             Authentication authentication
     ) {
 
         User currentUser = extractUser(authentication);
-
         Integer effectiveWardId = resolveWardScope(currentUser, wardId);
 
-        return analyticsService.getLast30DaysAnalytics(
-                effectiveWardId,
-                departmentId
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Last 30 days analytics",
+                        analyticsService.getLast30DaysAnalytics(
+                                effectiveWardId, departmentId
+                        )
+                )
         );
     }
-
-    // =========================================================
-    // HELPER: Extract Authenticated User
-    // =========================================================
 
     private User extractUser(Authentication authentication) {
 
-        String email = authentication.getName();
+        if (authentication == null ||
+            !(authentication.getPrincipal() instanceof UserPrincipal principal)) {
+            throw new AccessDeniedException("Unauthorized");
+        }
 
-        return userRepository.findByEmailAndActiveTrue(email)
-                .orElseThrow(() -> new AccessDeniedException("User not found or inactive"));
+        User user = principal.getUser();
+
+        if (!user.isActive()) {
+            throw new AccessDeniedException("User inactive");
+        }
+
+        return user;
     }
-
-    // =========================================================
-    // HELPER: Ward Restriction Logic
-    // =========================================================
 
     private Integer resolveWardScope(User user, Integer requestedWardId) {
 
-        if (user.getRole() == UserRole.ADMIN) {
-            // Admin can view any ward or all wards
+        if (UserRole.ADMIN.equals(user.getRole())) {
             return requestedWardId;
         }
 
-        if (user.getRole() == UserRole.WARD_SUPERIOR) {
+        if (UserRole.WARD_SUPERIOR.equals(user.getRole())) {
 
             if (requestedWardId != null &&
+                user.getWardId() != null &&
                 !requestedWardId.equals(user.getWardId())) {
 
                 throw new AccessDeniedException(
-                        "Ward superior cannot access other wards"
-                );
+                    "Ward superior cannot access other wards");
             }
 
-            // Force ward to their own ward
             return user.getWardId();
         }
 

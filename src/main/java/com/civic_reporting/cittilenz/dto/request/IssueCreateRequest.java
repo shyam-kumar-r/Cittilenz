@@ -22,7 +22,9 @@ public class IssueCreateRequest {
     @DecimalMin(value = "-180.0", message = "Invalid longitude")
     @DecimalMax(value = "180.0", message = "Invalid longitude")
     private Double longitude;
-
+    
+    @NotNull(message = "Issue type is required")
+    private Integer issueTypeId;
     // Getters and Setters
 
     public String getTitle() {
@@ -56,4 +58,12 @@ public class IssueCreateRequest {
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
     }
+
+	public Integer getIssueTypeId() {
+		return issueTypeId;
+	}
+
+	public void setIssueTypeId(Integer issueTypeId) {
+		this.issueTypeId = issueTypeId;
+	}
 }

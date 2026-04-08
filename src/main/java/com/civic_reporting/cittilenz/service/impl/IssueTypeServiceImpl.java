@@ -97,9 +97,13 @@ public class IssueTypeServiceImpl implements IssueTypeService {
         }
 
         if (req.getPriority() != null) {
-            it.setPriority(IssuePriority.valueOf(req.getPriority()));
+            try {
+                it.setPriority(IssuePriority.valueOf(req.getPriority()));
+            } catch (Exception ex) {
+                throw new IllegalArgumentException("Invalid priority value");
+            }
         }
-
+        
         if (req.getDescription() != null) {
             it.setDescription(req.getDescription());
         }

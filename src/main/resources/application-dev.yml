@@ -1,12 +1,4 @@
 spring:
-  jackson:
-    time-zone: Asia/Kolkata
-
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 15MB
-
   datasource:
     url: jdbc:postgresql://localhost:5432/cittilenz_db
     username: postgres
@@ -14,15 +6,13 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
-    open-in-view: false
     hibernate:
       ddl-auto: validate
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: false
+    show-sql: false   # 🔥 DISABLED (clean logs)
     properties:
       hibernate:
         format_sql: false
-        globally_quoted_identifiers: true
         jdbc:
           time_zone: Asia/Kolkata
 
@@ -35,38 +25,34 @@ spring:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
 
-server:
-  port: 8080
-
-logging:
-  level:
-    root: INFO
-    com.civic_reporting.cittilenz: INFO
-
-resilience4j:
-  ratelimiter:
-    instances:
-      issueFilterLimiter:
-        limitForPeriod: 20
-        limitRefreshPeriod: 1s
-        timeoutDuration: 0
-
-sla:
-  scheduler:
-    delay: 60000
-
+# ===============================
+# 📁 FILE STORAGE (LOCAL)
+# ===============================
 file:
   storage:
     location: ./uploads
 
+# ===============================
+# 🤖 AI SERVICE (LOCAL)
+# ===============================
 ai:
   service:
     base-url: http://localhost:8000
 
-geocoding:
-  enabled: true
-  provider: nominatim
-  rate-limit-per-second: 1
-  timeout-ms: 5000
-  user-agent: "cittilenz-backend/1.0 (shyamkumar71521@gmail.com)"
-  base-url: "https://nominatim.openstreetmap.org/reverse"
+# ===============================
+# 🌍 APP CONFIG (DEV)
+# ===============================
+app:
+  base-url: http://localhost:8080
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://127.0.0.1:3000
+
+# ===============================
+# 🧾 LOGGING (DEV)
+# ===============================
+logging:
+  level:
+    root: INFO
+    com.civic_reporting.cittilenz: DEBUG

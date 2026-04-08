@@ -87,7 +87,9 @@ public class OfficialIssueController {
         Page<IssueResponse> responsePage =
                 pageResult.map(issueMapper::toResponse);
 
-        return ResponseEntity.ok(ApiResponse.success(responsePage));
+        return ResponseEntity.ok(
+        	    ApiResponse.success("Official issues fetched", responsePage)
+        	);
     }
     
     @GetMapping("/dashboard")
@@ -102,7 +104,9 @@ public class OfficialIssueController {
         OfficialDashboardResponse response =
                 dashboardAnalyticsService.getOfficialDashboard(official.getId());
 
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(
+        	    ApiResponse.success("Dashboard fetched", response)
+        	);
     }
 
 }

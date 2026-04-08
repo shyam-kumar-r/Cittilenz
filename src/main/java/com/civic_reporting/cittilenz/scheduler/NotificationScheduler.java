@@ -4,9 +4,12 @@ import com.civic_reporting.cittilenz.service.NotificationProcessorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.UUID;
 
 @Component
 public class NotificationScheduler {
@@ -22,23 +25,34 @@ public class NotificationScheduler {
 
     /**
      * Runs every 30 seconds
-     * Processes notification queue safely
      */
     @Scheduled(fixedDelay = 30000)
     public void processNotifications() {
 
+        String traceId = UUID.randomUUID().toString();
+        MDC.put("traceId", traceId);
+
         long start = System.currentTimeMillis();
 
-        log.info("Notification worker started");
+        log.info("NotificationScheduler START | traceId={}", traceId);
 
         try {
             processor.processQueue();
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.info("NotificationScheduler SUCCESS | traceId={} | duration={} ms",
+                    traceId, duration);
+
         } catch (Exception ex) {
-            log.error("Notification processing failed", ex);
+
+            long duration = System.currentTimeMillis() - start;
+
+            log.error("NotificationScheduler FAILED | traceId={} | duration={} ms",
+                    traceId, duration, ex);
+
+        } finally {
+            MDC.clear();
         }
-
-        long duration = System.currentTimeMillis() - start;
-
-        log.info("Notification worker finished in {} ms", duration);
     }
 }

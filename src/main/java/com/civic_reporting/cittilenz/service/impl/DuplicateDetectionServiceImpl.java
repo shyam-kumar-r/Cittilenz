@@ -4,20 +4,19 @@ import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.repository.IssueRepository;
 import com.civic_reporting.cittilenz.service.DuplicateDetectionService;
 import com.civic_reporting.cittilenz.util.DuplicateSimilarityUtil;
+
 import org.locationtech.jts.geom.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class DuplicateDetectionServiceImpl implements DuplicateDetectionService {
-	
-	private static final Logger log =
-	        LoggerFactory.getLogger(DuplicateDetectionServiceImpl.class);
 
+    private static final Logger log =
+            LoggerFactory.getLogger(DuplicateDetectionServiceImpl.class);
 
     private final IssueRepository issueRepository;
 
@@ -32,13 +31,24 @@ public class DuplicateDetectionServiceImpl implements DuplicateDetectionService 
             Point location
     ) {
 
-        double radius = DuplicateSimilarityUtil.getDuplicateRadiusMeters();
+        if (wardId == null || issueTypeId == null || location == null) {
+            log.warn("Duplicate detection skipped due to invalid input");
+            return Optional.empty();
+        }
 
-        return issueRepository.findDuplicateSpatial(
-                wardId,
-                issueTypeId,
-                location,
-                radius
-        );
+        try {
+            double radius = DuplicateSimilarityUtil.getDuplicateRadiusMeters();
+
+            return issueRepository.findDuplicateSpatial(
+                    wardId,
+                    issueTypeId,
+                    location,
+                    radius
+            );
+
+        } catch (Exception ex) {
+            log.error("Duplicate detection failed", ex);
+            return Optional.empty(); // NEVER break issue creation
+        }
     }
 }

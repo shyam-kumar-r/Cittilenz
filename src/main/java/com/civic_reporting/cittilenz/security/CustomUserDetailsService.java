@@ -3,9 +3,8 @@ package com.civic_reporting.cittilenz.security;
 import com.civic_reporting.cittilenz.entity.User;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -24,10 +23,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository
                 .findByUsernameOrEmail(identifier, identifier)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found"));
+                        new UsernameNotFoundException("Invalid credentials"));
 
         if (!user.isActive()) {
-            throw new UsernameNotFoundException("User account is deactivated");
+            throw new DisabledException("Account deactivated");
         }
 
         return new UserPrincipal(user);

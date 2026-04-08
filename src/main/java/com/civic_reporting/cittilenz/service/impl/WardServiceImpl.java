@@ -38,8 +38,6 @@ public class WardServiceImpl implements WardService {
 
         validateCoordinates(latitude, longitude);
 
-        // IMPORTANT:
-        // POINT(x, y) = POINT(longitude, latitude)
         Point point = geometryFactory.createPoint(
                 new Coordinate(longitude, latitude)
         );
@@ -47,17 +45,15 @@ public class WardServiceImpl implements WardService {
 
         return wardRepository.findWardByPoint(point)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "No ward found for given coordinates"
-                        ));
+                        new ResourceNotFoundException("No ward found for coordinates"));
     }
 
     private void validateCoordinates(double lat, double lng) {
         if (lat < -90 || lat > 90) {
-            throw new IllegalArgumentException("Invalid latitude value");
+            throw new IllegalArgumentException("Invalid latitude");
         }
         if (lng < -180 || lng > 180) {
-            throw new IllegalArgumentException("Invalid longitude value");
+            throw new IllegalArgumentException("Invalid longitude");
         }
     }
 }

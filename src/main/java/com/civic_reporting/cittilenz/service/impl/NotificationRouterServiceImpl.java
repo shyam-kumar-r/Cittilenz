@@ -2,13 +2,8 @@ package com.civic_reporting.cittilenz.service.impl;
 
 import com.civic_reporting.cittilenz.entity.Notification;
 import com.civic_reporting.cittilenz.entity.UserDevice;
-
 import com.civic_reporting.cittilenz.repository.UserDeviceRepository;
-
-import com.civic_reporting.cittilenz.service.EmailService;
-import com.civic_reporting.cittilenz.service.PushNotificationService;
-import com.civic_reporting.cittilenz.service.WebSocketNotificationService;
-import com.civic_reporting.cittilenz.service.NotificationRouterService;
+import com.civic_reporting.cittilenz.service.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class NotificationRouterServiceImpl
-        implements NotificationRouterService {
+public class NotificationRouterServiceImpl implements NotificationRouterService {
 
     private static final Logger log =
             LoggerFactory.getLogger(NotificationRouterServiceImpl.class);
@@ -41,83 +35,50 @@ public class NotificationRouterServiceImpl
     }
 
     @Override
-    public void route(Notification notification) {
+    public void route(Notification n) {
 
-        String channel = notification.getChannel();
+        String channel = n.getChannel();
 
         if (channel == null) {
-            throw new IllegalStateException("Notification channel is null");
+            throw new IllegalArgumentException("Notification channel is required");
         }
 
         switch (channel) {
 
-            // ======================================
-            // EMAIL
-            // ======================================
             case "EMAIL" -> {
-
-                if (notification.getEmail() == null) {
-                    log.error("Email missing for notification id={}",
-                            notification.getId());
-                    throw new IllegalStateException("Email missing");
+                if (n.getEmail() == null) {
+                    throw new IllegalArgumentException("Email missing");
                 }
-
-                emailService.sendEmail(
-                        notification.getEmail(),
-                        notification.getTitle(),
-                        notification.getMessage()
-                );
+                emailService.sendEmail(n.getEmail(), n.getTitle(), n.getMessage());
             }
 
-            // ======================================
-            // IN-APP
-            // ======================================
             case "IN_APP" -> {
-
-                if (notification.getUserId() == null) {
-                    log.error("UserId missing for IN_APP id={}",
-                            notification.getId());
-                    throw new IllegalStateException("UserId missing");
+                if (n.getUserId() == null) {
+                    throw new IllegalArgumentException("UserId missing");
                 }
-
-                websocket.pushNotification(
-                        notification.getUserId(),
-                        notification
-                );
+                websocket.pushNotification(n.getUserId(), n);
             }
 
-            // ======================================
-            // PUSH
-            // ======================================
             case "PUSH" -> {
-
-                if (notification.getUserId() == null) {
-                    log.error("UserId missing for PUSH id={}",
-                            notification.getId());
-                    throw new IllegalStateException("UserId missing");
+                if (n.getUserId() == null) {
+                    throw new IllegalArgumentException("UserId missing");
                 }
 
                 List<UserDevice> devices =
-                        deviceRepository.findByUserIdAndActiveTrue(
-                                notification.getUserId()
-                        );
+                        deviceRepository.findByUserIdAndActiveTrue(n.getUserId());
 
                 for (UserDevice device : devices) {
-
                     pushService.sendPush(
                             device.getDeviceToken(),
-                            notification.getTitle(),
-                            notification.getMessage()
+                            n.getTitle(),
+                            n.getMessage()
                     );
                 }
             }
 
-            default -> throw new IllegalStateException(
-                    "Unsupported channel: " + channel
-            );
+            default -> throw new IllegalArgumentException("Unsupported channel: " + channel);
         }
 
-        log.info("Notification routed id={} channel={}",
-                notification.getId(), channel);
+        log.info("Notification routed | id={} channel={}", n.getId(), channel);
     }
 }

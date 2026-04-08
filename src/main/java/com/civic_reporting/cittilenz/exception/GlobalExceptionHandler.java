@@ -11,6 +11,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -168,6 +169,30 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
+    
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Object>> handleResponseStatusException(
+            ResponseStatusException ex
+    ) {
+        return buildResponse(
+                false,
+                ex.getReason() != null ? ex.getReason() : "Request failed",
+                null,
+                HttpStatus.valueOf(ex.getStatusCode().value())
+        );
+    }
+    
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalState(
+            IllegalStateException ex
+    ) {
+        return buildResponse(
+                false,
+                ex.getMessage(),
+                null,
+                HttpStatus.BAD_REQUEST
+        );
+    }
 
     /* =========================
        Response Builder
@@ -180,11 +205,8 @@ public class GlobalExceptionHandler {
             HttpStatus status
     ) {
 
-        ApiResponse<Object> response = new ApiResponse<>();
-        response.setSuccess(success);
-        response.setMessage(message);
-        response.setData(data);
-        response.setTimestamp(LocalDateTime.now());
+        ApiResponse<Object> response =
+                new ApiResponse<>(success, message, data, status.value());
 
         return new ResponseEntity<>(response, status);
     }

@@ -17,6 +17,14 @@ public class GeoHashUtil {
             throw new IllegalArgumentException("Latitude and Longitude cannot be null");
         }
 
+        if (latitude < -90 || latitude > 90) {
+            throw new IllegalArgumentException("Invalid latitude range");
+        }
+
+        if (longitude < -180 || longitude > 180) {
+            throw new IllegalArgumentException("Invalid longitude range");
+        }
+
         BigDecimal lat = BigDecimal.valueOf(latitude)
                 .setScale(6, RoundingMode.HALF_UP);
 

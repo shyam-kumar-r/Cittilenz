@@ -1,6 +1,7 @@
 package com.civic_reporting.cittilenz.controller;
 
 import com.civic_reporting.cittilenz.dto.request.*;
+import com.civic_reporting.cittilenz.dto.response.ApiResponse;
 import com.civic_reporting.cittilenz.dto.response.IssueResponse;
 import com.civic_reporting.cittilenz.entity.Issue;
 import com.civic_reporting.cittilenz.mapper.IssueMapper;
@@ -9,6 +10,7 @@ import com.civic_reporting.cittilenz.service.IssueLifecycleService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,24 +33,24 @@ public class IssueLifecycleController {
 
     @PreAuthorize("hasRole('OFFICIAL')")
     @PostMapping("/{id}/start")
-    public IssueResponse startWork(
+    public ResponseEntity<ApiResponse<IssueResponse>> startWork(
             @PathVariable Integer id,
             @Valid @RequestBody StartWorkRequest request,
             @AuthenticationPrincipal UserPrincipal user
     ) {
 
         Issue updated = lifecycleService.startWork(
-                id,
-                user.getId(),
-                request.getVersion()
-        );
+                id, user.getId(), request.getVersion());
 
-        return issueMapper.toResponse(updated);
+        return ResponseEntity.ok(
+                ApiResponse.success("Work started",
+                        issueMapper.toResponse(updated))
+        );
     }
 
     @PreAuthorize("hasRole('OFFICIAL')")
     @PostMapping(value = "/{id}/resolve", consumes = "multipart/form-data")
-    public IssueResponse resolveIssue(
+    public ResponseEntity<ApiResponse<IssueResponse>> resolveIssue(
             @PathVariable Integer id,
             @RequestParam("version") Long version,
             @RequestParam("image") MultipartFile image,
@@ -56,50 +58,51 @@ public class IssueLifecycleController {
     ) {
 
         Issue updated = lifecycleService.resolveIssue(
-                id,
-                user.getId(),
-                version,
-                image
-        );
+                id, user.getId(), version, image);
 
-        return issueMapper.toResponse(updated);
+        return ResponseEntity.ok(
+                ApiResponse.success("Issue resolved",
+                        issueMapper.toResponse(updated))
+        );
     }
 
     @PreAuthorize("hasRole('WARD_SUPERIOR')")
     @PostMapping("/{id}/reassign")
-    public IssueResponse reassignIssue(
+    public ResponseEntity<ApiResponse<IssueResponse>> reassignIssue(
             @PathVariable Integer id,
             @Valid @RequestBody ReassignIssueRequest request,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        Issue updated = lifecycleService.reassignEscalatedIssue(
-                id,
-                user.getId(),
-                request.getVersion()
-        );
 
-        return issueMapper.toResponse(updated);
+        Issue updated = lifecycleService.reassignEscalatedIssue(
+                id, user.getId(), request.getVersion());
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Issue reassigned",
+                        issueMapper.toResponse(updated))
+        );
     }
 
     @PreAuthorize("hasRole('WARD_SUPERIOR')")
     @PostMapping("/{id}/supervisor-reassign")
-    public IssueResponse supervisorReassign(
+    public ResponseEntity<ApiResponse<IssueResponse>> supervisorReassign(
             @PathVariable Integer id,
             @Valid @RequestBody ReassignIssueRequest request,
             @AuthenticationPrincipal UserPrincipal user
     ) {
-        Issue updated = lifecycleService.supervisorReassignSoftBreached(
-                id,
-                user.getId(),
-                request.getVersion()
-        );
 
-        return issueMapper.toResponse(updated);
+        Issue updated = lifecycleService.supervisorReassignSoftBreached(
+                id, user.getId(), request.getVersion());
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Supervisor reassigned",
+                        issueMapper.toResponse(updated))
+        );
     }
 
     @PreAuthorize("hasRole('WARD_SUPERIOR')")
     @PostMapping("/{id}/supervisor-clear")
-    public IssueResponse supervisorClear(
+    public ResponseEntity<ApiResponse<IssueResponse>> supervisorClear(
             @PathVariable Integer id,
             @Valid @RequestBody SupervisorClearRequest request,
             @AuthenticationPrincipal UserPrincipal user
@@ -112,6 +115,9 @@ public class IssueLifecycleController {
                 request.getRemarks()
         );
 
-        return issueMapper.toResponse(updated);
+        return ResponseEntity.ok(
+                ApiResponse.success("Supervisor cleared intervention",
+                        issueMapper.toResponse(updated))
+        );
     }
 }

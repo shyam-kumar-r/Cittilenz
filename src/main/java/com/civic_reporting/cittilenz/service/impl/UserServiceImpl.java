@@ -12,7 +12,10 @@ import com.civic_reporting.cittilenz.security.UserPrincipal;
 import com.civic_reporting.cittilenz.service.UserService;
 import com.civic_reporting.cittilenz.service.NotificationService;
 import com.civic_reporting.cittilenz.service.TemplateService;
+import com.civic_reporting.cittilenz.exception.ResourceNotFoundException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 
@@ -26,7 +29,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -39,6 +42,9 @@ public class UserServiceImpl implements UserService {
 
     private static final String LOGO_URL =
             "https://raw.githubusercontent.com/shyam-kumar-r/Cittilenz/master/src/main/resources/static/logo.jpeg";
+    
+    private static final Logger log =
+            LoggerFactory.getLogger(UserServiceImpl.class);
 
     public UserServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -63,7 +69,7 @@ public class UserServiceImpl implements UserService {
 
     private void ensureCitizenOnly(User user) {
         if (user.getRole() != UserRole.CITIZEN) {
-            throw new AccessDeniedException("Only citizens can perform this action");
+            throw new AccessDeniedException("Only citizens allowed");
         }
     }
 
@@ -73,6 +79,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User registerCitizen(UserRegisterRequest request) {
+
+        log.info("User registration started | username={}", request.getUsername());
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new IllegalArgumentException("Passwords do not match");
@@ -102,17 +110,19 @@ public class UserServiceImpl implements UserService {
 
         User saved = userRepository.save(user);
 
-        // ✅ HTML EMAIL
         notificationService.notifyUser(
                 saved.getId(),
                 "Welcome to Cittilenz",
                 "USER_REGISTERED",
                 "USER_REGISTERED",
-                null // ✅ NO ISSUE
+                null
         );
+
+        log.info("User registered successfully | userId={}", saved.getId());
 
         return saved;
     }
+
 
     /* ========================================================= */
     @Override
@@ -250,7 +260,6 @@ public class UserServiceImpl implements UserService {
         n.setMessage("ACCOUNT_DELETED");
         n.setNotificationType("ACCOUNT_DELETED");
         n.setIssueId(null);
-
         n.setChannel("EMAIL");
         n.setStatus("PENDING");
         n.setRetryCount(0);
@@ -264,12 +273,14 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User getAuthenticatedUser() {
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
 
-        String username = authentication.getName();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (auth == null || auth.getName() == null) {
+            throw new AccessDeniedException("Unauthorized access");
+        }
+
+        return userRepository.findByUsername(auth.getName())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }

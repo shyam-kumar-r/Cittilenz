@@ -1,6 +1,7 @@
 package com.civic_reporting.cittilenz.service.impl;
 
 import com.civic_reporting.cittilenz.entity.IssueType;
+import com.civic_reporting.cittilenz.exception.ResourceNotFoundException;
 import com.civic_reporting.cittilenz.repository.IssueTypeRepository;
 import com.civic_reporting.cittilenz.service.AiClassificationService;
 import org.slf4j.Logger;
@@ -37,18 +38,16 @@ public class AiClassificationServiceImpl implements AiClassificationService {
             */
 
             // ===== MANUAL FALLBACK (FOR NOW) =====
-            log.info("AI model not active. Using manual fallback classification.");
+
 
             return issueTypeRepository.findFirstByActiveTrue()
-                    .orElseThrow(() -> new RuntimeException("No active issue types found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         } catch (Exception ex) {
 
-            log.error("AI classification failed. Falling back.", ex);
-
             // Safe fallback
             return issueTypeRepository.findFirstByActiveTrue()
-                    .orElseThrow(() -> new RuntimeException("No fallback issue type available"));
+                    .orElseThrow(() -> new ResourceNotFoundException("No fallback issue type available"));
         }
     }
 
