@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 public class IssueMapper {
 
     private final IssueHistoryRepository issueHistoryRepository;
-    private final UserRepository userRepository;
     private final AssignmentService assignmentService;
 
     // 🔥 PRODUCTION SAFE BASE URL
@@ -29,11 +28,9 @@ public class IssueMapper {
 
     public IssueMapper(
             IssueHistoryRepository issueHistoryRepository,
-            UserRepository userRepository,
             AssignmentService assignmentService
     ) {
         this.issueHistoryRepository = issueHistoryRepository;
-        this.userRepository = userRepository;
         this.assignmentService = assignmentService;
     }
 
@@ -96,18 +93,9 @@ public class IssueMapper {
         // =========================
         // Assigned Official
         // =========================
-        if (issue.getAssignedOfficialId() != null) {
-
-            Optional<User> official =
-                    userRepository.findByIdAndActiveTrue(issue.getAssignedOfficialId());
-
-            official.ifPresent(user -> {
-                response.setAssignedOfficialId(user.getId());
-                response.setAssignedOfficialName(user.getFullName());
-                response.setAssignedOfficialMobile(user.getMobile());
-                response.setAssignedOfficialEmail(user.getEmail());
-            });
-        }
+        response.setAssignedOfficialId(issue.getAssignedOfficialId());
+        response.setAssignedOfficialName(issue.getAssignedOfficialName());
+        response.setAssignedOfficialEmail(issue.getAssignedOfficialEmail());
 
         // =========================
         // Ward Superior
@@ -184,10 +172,7 @@ public class IssueMapper {
         dto.setChangedAt(history.getChangedAt());
         dto.setRemarks(history.getRemarks());
 
-        if (history.getChangedBy() != null) {
-            userRepository.findByIdAndActiveTrue(history.getChangedBy())
-                    .ifPresent(user -> dto.setChangedByName(user.getFullName()));
-        }
+        dto.setChangedByName(history.getChangedByName());
 
         return dto;
     }

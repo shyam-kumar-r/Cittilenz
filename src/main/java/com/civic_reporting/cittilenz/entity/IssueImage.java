@@ -18,10 +18,15 @@ public class IssueImage {
     private String imageUrl;
 
     @Column(name = "image_type", nullable = false)
-    private String imageType; // Must match DB check constraint
+    private String imageType;
 
-    @Column(name = "uploaded_by", nullable = false)
+    // ✅ MUST BE NULLABLE
+    @Column(name = "uploaded_by")
     private Integer uploadedBy;
+
+    // ✅ SNAPSHOT FIELD
+    @Column(name = "uploaded_by_name")
+    private String uploadedByName;
 
     @Column(name = "uploaded_at")
     private LocalDateTime uploadedAt;
@@ -69,6 +74,14 @@ public class IssueImage {
 		this.uploadedBy = uploadedBy;
 	}
 
+	public String getUploadedByName() {
+		return uploadedByName;
+	}
+
+	public void setUploadedByName(String uploadedByName) {
+		this.uploadedByName = uploadedByName;
+	}
+
 	public LocalDateTime getUploadedAt() {
 		return uploadedAt;
 	}
@@ -85,6 +98,5 @@ public class IssueImage {
 		this.active = active;
 	}
 
-    // getters and setters
     
 }

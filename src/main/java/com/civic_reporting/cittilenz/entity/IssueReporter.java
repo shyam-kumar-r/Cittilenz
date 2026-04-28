@@ -15,7 +15,8 @@ public class IssueReporter {
     @Column(name = "issue_id", nullable = false)
     private Integer issueId;
 
-    @Column(name = "user_id", nullable = false)
+    // ✅ MUST MATCH DB (nullable)
+    @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "reported_at")
@@ -53,6 +54,5 @@ public class IssueReporter {
 		this.reportedAt = reportedAt;
 	}
 
-    // getters and setters
     
 }

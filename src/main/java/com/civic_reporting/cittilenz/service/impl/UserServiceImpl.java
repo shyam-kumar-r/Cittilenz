@@ -138,7 +138,11 @@ public class UserServiceImpl implements UserService {
 
         User user = getCurrentUser();
         ensureCitizenOnly(user);
-
+        
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+        
         if (request.getFullName() != null) {
             user.setFullName(request.getFullName());
         }
@@ -231,6 +235,7 @@ public class UserServiceImpl implements UserService {
        ========================================================= */
     @Override
     @PreAuthorize("hasRole('CITIZEN')")
+    @Transactional
     public void deleteCurrentUser(HttpServletRequest request) {
 
         User user = getCurrentUser();
@@ -240,12 +245,23 @@ public class UserServiceImpl implements UserService {
         String email = user.getEmail();
         String name = user.getFullName();
 
-        // ✅ BUILD EMAIL FIRST (fail-safe)
+        log.info("Citizen deletion started | userId={}", userId);
 
-        userRepository.delete(user);
+        try {
+            // ✅ HARD DELETE (Triggers will handle everything)
+            userRepository.delete(user);
 
+            log.info("Citizen deleted successfully | userId={}", userId);
+
+        } catch (Exception ex) {
+            log.error("Citizen deletion failed | userId={}", userId, ex);
+            throw ex;
+        }
+
+        // ✅ ALWAYS send notification (separate txn)
         sendDeletionNotification(userId, email, name);
 
+        // ✅ Clear session
         SecurityContextHolder.clearContext();
     }
 
@@ -267,6 +283,8 @@ public class UserServiceImpl implements UserService {
         n.setActive(true);
 
         notificationRepository.save(n);
+
+        log.info("Deletion notification queued | userId={}", userId);
     }
 
     /* ========================================================= */

@@ -350,4 +350,31 @@ public interface IssueRepository extends
     		        LocalDateTime fromDate,
     		        LocalDateTime toDate
     		);
+   
+
+        @Modifying
+        @Query(value = """
+            UPDATE issues
+            SET status = 'UNASSIGNED',
+                assigned_official_id = NULL,
+                assigned_official_name = NULL,
+                assigned_official_email = NULL,
+                assigned_at = NULL,
+                reassignment_count = 0,
+
+                soft_sla_deadline = NOW() + INTERVAL '2 hours',
+                hard_sla_deadline = NULL,
+                soft_sla_breached = false,
+                hard_sla_breached = false,
+                requires_supervisor_intervention = false,
+
+                started_at = NULL,
+                escalated_at = NULL,
+                reassigned_at = NULL
+
+            WHERE status = 'SUBMITTED'
+              AND created_at < NOW() - INTERVAL '30 minutes'
+        """, nativeQuery = true)
+        int markSubmittedAsUnassigned();
+    
 }

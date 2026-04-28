@@ -30,4 +30,14 @@ public class Department {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public boolean isActive() { return active; }
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+    
 }

@@ -1,10 +1,11 @@
 package com.civic_reporting.cittilenz.enums;
 
 public enum IssueStatus {
-    SUBMITTED,
-    ASSIGNED,
-    IN_PROGRESS,
-    RESOLVED,
-    ESCALATED,
-    REASSIGNED
+	SUBMITTED,
+	UNASSIGNED,
+	ASSIGNED,
+	IN_PROGRESS,
+	ESCALATED,
+	REASSIGNED,
+	RESOLVED
 }

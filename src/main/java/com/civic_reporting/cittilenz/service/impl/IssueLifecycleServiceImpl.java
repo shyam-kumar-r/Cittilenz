@@ -242,13 +242,41 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                         issue.getId(),
                         3
                 )
-                .orElseThrow(() -> new IllegalStateException("No eligible official found"));
+                .orElseGet(() -> {
+
+                    log.warn("Smart assignment failed → using fallback (exclude current)");
+
+                    return userRepository.findFallbackOfficial(
+                            issue.getWardId(),
+                            issue.getDepartmentId(),
+                            issue.getAssignedOfficialId()
+                    ).orElseGet(() -> {
+
+                        log.warn("Fallback failed → using last fallback (allow current)");
+
+                        return userRepository.findAnyOfficial(
+                                issue.getWardId(),
+                                issue.getDepartmentId()
+                        ).orElseThrow(() -> {
+
+                            log.error("No officials available at all for ward={}, dept={}",
+                                    issue.getWardId(), issue.getDepartmentId());
+
+                            return new IllegalStateException("No Eligible Officials Found.");
+                        });
+                    });
+                });
 
         IssueStatus oldStatus = issue.getStatus();
 
         Integer failedOfficialId = issue.getAssignedOfficialId();
 
+        User NewOfficial = userRepository.findById(newOfficialId)
+                .orElseThrow(() -> new IllegalStateException("Official not found"));
+
         issue.setAssignedOfficialId(newOfficialId);
+        issue.setAssignedOfficialName(NewOfficial.getFullName());
+        issue.setAssignedOfficialEmail(NewOfficial.getEmail());
         issue.setStatus(IssueStatus.REASSIGNED);
         issue.setReassignedAt(LocalDateTime.now());
         issue.setSoftSlaBreached(false);
@@ -316,11 +344,39 @@ public class IssueLifecycleServiceImpl implements IssueLifecycleService {
                         issue.getId(),
                         3
                 )
-                .orElseThrow(() -> new IllegalStateException("No eligible official found"));
+                .orElseGet(() -> {
+
+                    log.warn("Smart assignment failed → using fallback (exclude current)");
+
+                    return userRepository.findFallbackOfficial(
+                            issue.getWardId(),
+                            issue.getDepartmentId(),
+                            issue.getAssignedOfficialId()
+                    ).orElseGet(() -> {
+
+                        log.warn("Fallback failed → using last fallback (allow current)");
+
+                        return userRepository.findAnyOfficial(
+                                issue.getWardId(),
+                                issue.getDepartmentId()
+                        ).orElseThrow(() -> {
+
+                            log.error("No officials available at all for ward={}, dept={}",
+                                    issue.getWardId(), issue.getDepartmentId());
+
+                            return new IllegalStateException("No Eligible Officials Found.");
+                        });
+                    });
+                });
 
         LocalDateTime now = LocalDateTime.now();
 
+        User newOfficial = userRepository.findById(newOfficialId)
+                .orElseThrow(() -> new IllegalStateException("Official not found"));
+
         issue.setAssignedOfficialId(newOfficialId);
+        issue.setAssignedOfficialName(newOfficial.getFullName());
+        issue.setAssignedOfficialEmail(newOfficial.getEmail());
         issue.setReassignmentCount(0);
         issue.setSoftSlaBreached(false);
         issue.setRequiresSupervisorIntervention(false);

@@ -66,6 +66,12 @@ public class Issue {
 
     @Column(name = "assigned_official_id")
     private Integer assignedOfficialId;
+    
+    @Column(name = "assigned_official_name")
+    private String assignedOfficialName;
+
+    @Column(name = "assigned_official_email")
+    private String assignedOfficialEmail;
 
     @Column(name = "report_count")
     private Integer reportCount = 1;
@@ -477,6 +483,22 @@ public class Issue {
 
 		public void setIssueTypeName(String issueTypeName) {
 			this.issueTypeName = issueTypeName;
+		}
+
+		public String getAssignedOfficialName() {
+			return assignedOfficialName;
+		}
+
+		public void setAssignedOfficialName(String assignedOfficialName) {
+			this.assignedOfficialName = assignedOfficialName;
+		}
+
+		public String getAssignedOfficialEmail() {
+			return assignedOfficialEmail;
+		}
+
+		public void setAssignedOfficialEmail(String assignedOfficialEmail) {
+			this.assignedOfficialEmail = assignedOfficialEmail;
 		}
 
 }

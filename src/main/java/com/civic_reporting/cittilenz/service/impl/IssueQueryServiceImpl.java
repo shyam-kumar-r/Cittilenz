@@ -137,7 +137,6 @@ public class IssueQueryServiceImpl implements IssueQueryService {
             userRepository.findByIdAndActiveTrue(issue.getAssignedOfficialId())
                     .ifPresent(user -> {
                         response.setAssignedOfficialName(user.getFullName());
-                        response.setAssignedOfficialMobile(user.getMobile());
                         response.setAssignedOfficialEmail(user.getEmail());
                     });
         }

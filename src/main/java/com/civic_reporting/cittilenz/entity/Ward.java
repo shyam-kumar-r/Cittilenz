@@ -28,4 +28,17 @@ public class Ward {
     public Integer getWardNumber() { return wardNumber; }
     public String getWardName() { return wardName; }
     public MultiPolygon getBoundary() { return boundary; }
+	public void setId(Integer id) {
+		this.id = id;
+	}
+	public void setWardNumber(Integer wardNumber) {
+		this.wardNumber = wardNumber;
+	}
+	public void setWardName(String wardName) {
+		this.wardName = wardName;
+	}
+	public void setBoundary(MultiPolygon boundary) {
+		this.boundary = boundary;
+	}
+    
 }

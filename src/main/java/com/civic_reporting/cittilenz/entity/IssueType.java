@@ -69,5 +69,9 @@ public class IssueType {
 		this.priority = priority;
 	}
 
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
 	
 }

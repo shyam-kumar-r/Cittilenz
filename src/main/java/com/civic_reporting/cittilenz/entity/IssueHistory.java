@@ -24,8 +24,11 @@ public class IssueHistory {
     @Column(name = "new_status", nullable = false)
     private IssueStatus newStatus;
 
-    @Column(name = "changed_by", nullable = false)
+    @Column(name = "changed_by")
     private Integer changedBy;
+
+    @Column(name = "changed_by_name")
+    private String changedByName;
 
     @Column(name = "remarks")
     private String remarks;
@@ -92,4 +95,12 @@ public class IssueHistory {
     public void setChangedAt(LocalDateTime changedAt) {
         this.changedAt = changedAt;
     }
+
+	public String getChangedByName() {
+		return changedByName;
+	}
+
+	public void setChangedByName(String changedByName) {
+		this.changedByName = changedByName;
+	}
 }

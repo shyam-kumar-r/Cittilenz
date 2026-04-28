@@ -9,4 +9,5 @@ public interface WardService {
     List<Ward> getAllWards();
     Ward getWardById(Integer id);
     Ward findWardByCoordinates(double latitude, double longitude);
+
 }

@@ -48,7 +48,6 @@ public class IssueResponse {
     // Official Assignment
     // =========================
     private String assignedOfficialName;
-    private String assignedOfficialMobile;
     private String assignedOfficialEmail;
 
     // =========================
@@ -149,9 +148,6 @@ public class IssueResponse {
 
     public String getAssignedOfficialName() { return assignedOfficialName; }
     public void setAssignedOfficialName(String assignedOfficialName) { this.assignedOfficialName = assignedOfficialName; }
-
-    public String getAssignedOfficialMobile() { return assignedOfficialMobile; }
-    public void setAssignedOfficialMobile(String assignedOfficialMobile) { this.assignedOfficialMobile = assignedOfficialMobile; }
 
     public String getAssignedOfficialEmail() { return assignedOfficialEmail; }
     public void setAssignedOfficialEmail(String assignedOfficialEmail) { this.assignedOfficialEmail = assignedOfficialEmail; }

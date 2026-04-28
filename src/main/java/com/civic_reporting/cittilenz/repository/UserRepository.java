@@ -113,7 +113,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 		        Integer departmentId,
 		        Integer currentOfficialId,
 		        Integer issueId,
-		        int limit
+		        Integer limit
 		);
  
  @Query(value = """
@@ -124,24 +124,27 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 		      AND u.department_id = :departmentId
 		      AND u.id <> :currentOfficialId
 		      AND u.is_active = true
-		      AND u.id NOT IN (
-		            SELECT ish.changed_by
-		            FROM issue_status_history ish
-		            WHERE ish.issue_id = :issueId
-		              AND ish.changed_by IN (
-		                    SELECT id FROM users WHERE role = 'OFFICIAL'
-		              )
-		            ORDER BY ish.changed_at DESC
-		            LIMIT :limit
-		      )
 		    ORDER BY RANDOM()
 		    LIMIT 1
 		""", nativeQuery = true)
-		Optional<Integer> findSmartOfficialForAssignment(
+		Optional<Integer> findFallbackOfficial(
 		        Integer wardId,
 		        Integer departmentId,
-		        Integer currentOfficialId,
-		        Integer issueId,
-		        Integer limit
+		        Integer currentOfficialId
+		);
+ 
+ @Query(value = """
+		    SELECT u.id
+		    FROM users u
+		    WHERE u.role = 'OFFICIAL'
+		      AND u.ward_id = :wardId
+		      AND u.department_id = :departmentId
+		      AND u.is_active = true
+		    ORDER BY RANDOM()
+		    LIMIT 1
+		""", nativeQuery = true)
+		Optional<Integer> findAnyOfficial(
+		        Integer wardId,
+		        Integer departmentId
 		);
 }

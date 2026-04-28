@@ -10,10 +10,14 @@ import com.civic_reporting.cittilenz.mapper.UserMapper;
 import com.civic_reporting.cittilenz.repository.NotificationRepository;
 import com.civic_reporting.cittilenz.repository.UserRepository;
 import com.civic_reporting.cittilenz.service.*;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +30,9 @@ public class AdminServiceImpl implements AdminService {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
+    
+    private static final Logger log =
+            LoggerFactory.getLogger(AdminServiceImpl.class);
 
     public AdminServiceImpl(UserRepository userRepository,
                             PasswordEncoder passwordEncoder,
@@ -125,6 +132,12 @@ public class AdminServiceImpl implements AdminService {
         if (request.getIsActive() != null)
             user.setActive(request.getIsActive());
 
+        if (request.getWardId() != null)
+            user.setWardId(request.getWardId());
+
+        if (request.getDepartmentId() != null)
+            user.setDepartmentId(request.getDepartmentId());
+
         return userRepository.save(user);
     }
 
@@ -162,20 +175,44 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Integer id) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found"));
 
-        userRepository.delete(user);
+        Integer userId = user.getId();
+        String email = user.getEmail();
+
+        log.info("Admin deletion started | targetUserId={}", userId);
+
+        try {
+            // ✅ HARD DELETE (DB triggers handle reassignment/history)
+            userRepository.delete(user);
+
+            log.info("Admin deleted user successfully | targetUserId={}", userId);
+
+        } catch (Exception ex) {
+            log.error("Admin deletion failed | targetUserId={}", userId, ex);
+            throw ex;
+        }
+
+        // ✅ ALWAYS persist notification independently
+        sendAdminDeletionNotification(userId, email);
+    }
+    
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendAdminDeletionNotification(Integer userId, String email) {
 
         Notification n = new Notification();
-        n.setUserId(id);
-        n.setEmail(user.getEmail());
+
+        n.setUserId(userId);
+        n.setEmail(email);
         n.setTitle("Account Deleted by Admin");
         n.setMessage("ADMIN_USER_DELETED");
         n.setNotificationType("ADMIN_USER_DELETED");
+        n.setIssueId(null);
         n.setChannel("EMAIL");
         n.setStatus("PENDING");
         n.setRetryCount(0);
@@ -183,5 +220,7 @@ public class AdminServiceImpl implements AdminService {
         n.setActive(true);
 
         notificationRepository.save(n);
+
+        log.info("Admin deletion notification queued | userId={}", userId);
     }
 }
