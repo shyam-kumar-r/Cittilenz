@@ -34,7 +34,7 @@ public class NominatimClient {
                         .queryParam("format", "json")
                         .queryParam("addressdetails", 1)
                         .build())
-                .header("User-Agent", "cittilenz-backend/1.0 (shyamkumar71521@gmail.com)")
+                .header("User-Agent", "cittilenz-backend/1.0 (cittilenz.app@gmail.com)")
                 .retrieve()
                 .bodyToMono(Map.class)
                 .retryWhen(

@@ -15,15 +15,18 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class WebClientConfig {
 
+    private static final int TIMEOUT_SECONDS = 90;
+
     @Bean
     public WebClient webClient() {
 
         HttpClient httpClient = HttpClient.create()
-                .responseTimeout(Duration.ofSeconds(5))
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .responseTimeout(Duration.ofSeconds(TIMEOUT_SECONDS))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT_SECONDS * 1000)
                 .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.SECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(5, TimeUnit.SECONDS)));
+                        conn.addHandlerLast(new ReadTimeoutHandler(TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                            .addHandlerLast(new WriteTimeoutHandler(TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                );
 
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient))

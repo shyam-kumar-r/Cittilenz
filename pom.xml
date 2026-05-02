@@ -173,14 +173,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- DevTools (DEV only) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>
-
         <!-- ========================= -->
         <!-- TESTING -->
         <!-- ========================= -->
@@ -284,6 +276,13 @@
         <artifactId>mockito-core</artifactId>
         <scope>test</scope>
     </dependency>
+
+<!-- PostGIS JDBC driver -->
+<dependency>
+    <groupId>net.postgis</groupId>
+    <artifactId>postgis-jdbc</artifactId>
+    <version>2023.1.0</version>
+</dependency>
     
     </dependencies>
 

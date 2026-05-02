@@ -54,14 +54,14 @@ geocoding:
   provider: nominatim
   rate-limit-per-second: 1
   timeout-ms: 5000
-  user-agent: "cittilenz-backend/1.0 (shyamkumar71521@gmail.com)"
+  user-agent: "cittilenz-backend/1.0 (cittilenz.app@gmail.com)"
   base-url: "https://nominatim.openstreetmap.org/reverse"
 
 # ===============================
 # 🔐 JWT
 # ===============================
 jwt:
-  secret: {Your JWT-SECRET}
+  secret: 18AzTg94Ox9oB1eqLMDNKJDkp/FetuLv7ycYhpCNsUSKYx7Y5ukt5veUYAwpx7vApSn1C1lvPP27rUMGfskhVQ==
   expiration: 86400000
 
 # ===============================

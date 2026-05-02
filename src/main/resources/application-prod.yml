@@ -1,46 +1,64 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      idle-timeout: 30000
+      connection-timeout: 30000
+      max-lifetime: 600000
+      leak-detection-threshold: 120000
+      validation-timeout: 5000
+      connection-test-query: SELECT 1
 
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.spatial.dialect.postgis.PostgisDialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
 
-# ===============================
-# 📁 FILE STORAGE (PROD)
-# ===============================
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  devtools:
+    restart:
+      enabled: false
+
 file:
   storage:
-    location: ${FILE_STORAGE_PATH}
+    location: ${FILE_STORAGE_PATH:/tmp/uploads}
 
-# ===============================
-# 🤖 AI SERVICE (PROD)
-# ===============================
 ai:
   service:
     base-url: ${AI_SERVICE_URL}
 
-# ===============================
-# 🌍 APP CONFIG (PROD)
-# ===============================
 app:
   base-url: ${APP_BASE_URL}
   cors:
     allowed-origins:
-      - https://your-frontend-domain.com
+      - https://cittilenz.vercel.app
 
-# ===============================
-# 🧾 LOGGING (PROD)
-# ===============================
+jwt:
+  secret: ${JWT_SECRET}
+
 logging:
   level:
     root: INFO
     com.civic_reporting.cittilenz: INFO
-    org.hibernate.SQL: OFF
-    org.hibernate.type.descriptor.sql.BasicBinder: OFF
