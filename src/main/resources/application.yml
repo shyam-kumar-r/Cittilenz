@@ -61,7 +61,7 @@ geocoding:
 # 🔐 JWT
 # ===============================
 jwt:
-  secret: 18AzTg94Ox9oB1eqLMDNKJDkp/FetuLv7ycYhpCNsUSKYx7Y5ukt5veUYAwpx7vApSn1C1lvPP27rUMGfskhVQ==
+  secret: {Your JWT-SECRET}
   expiration: 86400000
 
 # ===============================
