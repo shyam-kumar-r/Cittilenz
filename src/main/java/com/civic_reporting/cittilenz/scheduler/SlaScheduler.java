@@ -25,7 +25,10 @@ public class SlaScheduler {
         this.slaService = slaService;
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(
+    	    fixedRate = 60000,
+    	    initialDelay = 120000
+    	)
     @SchedulerLock(
             name = "slaProcessorLock",
             lockAtLeastFor = "PT10S",
@@ -60,7 +63,10 @@ public class SlaScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(
+    	    fixedRate = 60000,
+    	    initialDelay = 120000
+    	)
     @SchedulerLock(
             name = "reassignmentProcessorLock",
             lockAtLeastFor = "PT10S",

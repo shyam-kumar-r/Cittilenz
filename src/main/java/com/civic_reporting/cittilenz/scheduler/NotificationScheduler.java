@@ -26,7 +26,10 @@ public class NotificationScheduler {
     /**
      * Runs every 30 seconds
      */
-    @Scheduled(fixedDelay = 30000)
+    @Scheduled(
+    	    fixedRate = 30000,
+    	    initialDelay = 120000
+    	)
     public void processNotifications() {
 
         String traceId = UUID.randomUUID().toString();

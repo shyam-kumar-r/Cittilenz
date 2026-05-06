@@ -21,7 +21,7 @@ public class IssueSchedulerJob {
     /**
      * Runs every 5 minutes
      */
-    @Scheduled(fixedRate = 300000) // 5 minutes
+    @Scheduled(fixedRate = 300000, initialDelay = 120000) // 5 minutes
     public void runSubmittedTimeoutJob() {
 
         log.info("Running scheduler job: SUBMITTED timeout handler");
