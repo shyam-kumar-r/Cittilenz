@@ -22,8 +22,6 @@ public class CorsConfig {
 
         List<String> allowedOrigins = corsProperties.getAllowedOrigins();
 
-        System.out.println("Allowed Origins = " + allowedOrigins);
-
         config.setAllowedOrigins(allowedOrigins);
 
         config.setAllowedMethods(List.of(

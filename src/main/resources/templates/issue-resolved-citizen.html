@@ -1,81 +1,191 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-<meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-  @media (prefers-color-scheme: dark) {
-    body { background-color: #0B1220 !important; }
-    .container { background-color: #111827 !important; }
-    .text { color: #E5E7EB !important; }
-    .card { background-color: #1F2937 !important; }
-  }
-</style>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Marcellus&display=swap"
+      rel="stylesheet"
+    />
 
-</head>
+    <style>
+      @media only screen and (max-width: 600px) {
+        .container {
+          width: 100% !important;
+          border-radius: 0 !important;
+        }
 
-<body style="margin:0; padding:0; background:#F4F7FB; font-family:Arial, sans-serif;">
+        .padding {
+          padding: 30px 20px !important;
+        }
 
-<table width="100%">
-<tr>
-<td align="center">
+        .header {
+          padding: 40px 20px 35px !important;
+        }
 
-<table width="600" class="container"
-style="background:#ffffff; margin:30px 0; border-radius:16px; overflow:hidden;">
+        .logo-box {
+          width: 60px !important;
+          height: 60px !important;
+          border-radius: 12px !important;
+          background: #020200 !important;
+        }
 
-<!-- HEADER (same) -->
-<tr>
-<td align="center"
-style="background:linear-gradient(135deg,#1E3A8A,#0EA5A4); padding:35px; color:white;">
+        .logo-box img {
+          width: 100% !important;
+          height: 100% !important;
+        }
 
-<img th:src="${logoUrl}" width="85"
-style="border-radius:50%; background:white; padding:6px;" />
+        h1 {
+          font-size: 24px !important;
+        }
 
-<h1> Cittilenz </h1>
-<p>Turning What Matters Into Action</p>
+        h2 {
+          font-size: 20px !important;
+        }
 
-</td>
-</tr>
+        p {
+          font-size: 15px !important;
+        }
+      }
+    </style>
+  </head>
 
-<!-- BODY (CHANGED) -->
-<tr>
-<td style="padding:30px;" class="text">
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background: #f6f6f6;
+      font-family: 'Marcellus', Georgia, serif;
+    "
+  >
+    <table width="100%" style="padding: 30px 10px">
+      <tr>
+        <td align="center">
+          <table
+            width="100%"
+            class="container"
+            style="
+              max-width: 600px;
+              background: #ffffff;
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <!-- HEADER -->
+            <tr>
+              <td
+                align="center"
+                class="header"
+                style="
+                  background: #020200;
+                  padding: 55px 40px 45px;
+                  color: #ffffff;
+                "
+              >
+                <div
+                  class="logo-box"
+                  style="
+                    width: 72px;
+                    height: 72px;
+                    background: #020200;
+                    border-radius: 14px;
+                    margin: 0 auto 18px;
+                    overflow: hidden;
+                  "
+                >
+                  <img th:src="${logoUrl}" width="72" height="72" style="display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 14px;" />
+                </div>
 
-<h2>Hello <span th:text="${name}"></span>,</h2>
+                <h1
+                  style="
+                    margin: 0 0 6px;
+                    font-size: 30px;
+                    letter-spacing: 2px;
+                    font-weight: normal;
+                  "
+                >
+                  Cittilenz
+                </h1>
 
-<p>
-Your reported issue has been <b>successfully resolved</b>.
-</p>
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 13px;
+                    letter-spacing: 1px;
+                    opacity: 0.75;
+                  "
+                >
+                  Turning What Matters Into Action
+                </p>
+              </td>
+            </tr>
 
-<div style="background:#ECFDF5;padding:16px;border-radius:10px;">
-<p><b>Issue:</b> <span th:text="${issueTitle}"></span></p>
-<p><b>Status:</b> Resolved</p>
-</div>
+            <!-- DIVIDER -->
+            <tr>
+              <td style="height: 1px; background: #eaeaea"></td>
+            </tr>
 
-<p style="margin-top:20px;">
-Thank you for reporting and contributing to improving your community.
-</p>
+            <!-- BODY -->
+            <tr>
+              <td class="padding" style="padding: 45px 40px; color: #000000">
+                <h2 style="margin: 0 0 18px; font-size: 24px; line-height: 1.3">
+                  Hello <span th:text="${name}"></span>,
+                </h2>
 
-<p style="margin-top:25px;font-size:14px;">
-Regards,<br>
-<b>Team Cittilenz</b>
-</p>
+                <p style="margin: 0 0 14px; font-size: 16px; line-height: 1.6">
+                  Your reported issue has been <b>successfully resolved</b>.
+                </p>
 
-</td>
-</tr>
+                <div
+                  style="
+                    background: #f4f4f4;
+                    padding: 18px;
+                    border-radius: 12px;
+                    margin-top: 18px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                  "
+                >
+                  <p style="margin: 0 0 8px">
+                    <b>Issue:</b> <span th:text="${issueTitle}"></span>
+                  </p>
 
-<!-- FOOTER -->
-<tr>
-<td align="center" style="padding:20px; font-size:12px; color:#999;">
-© 2026 Cittilenz • All rights reserved
-</td>
-</tr>
+                  <p style="margin: 0"><b>Status:</b> Resolved</p>
+                </div>
 
-</table>
+                <p
+                  style="margin: 18px 0 14px; font-size: 16px; line-height: 1.6"
+                >
+                  Thank you for reporting and contributing to improving your
+                  <a
+                    href="https://cittilenz.vercel.app/"
+                    style="color: #000000; text-decoration: underline"
+                  >
+                    community </a
+                  >.
+                </p>
 
-</td>
-</tr>
-</table>
+                <p style="margin-top: 24px; font-size: 14px; line-height: 1.5">
+                  Regards,<br />
+                  <b>Team Cittilenz</b>
+                </p>
+              </td>
+            </tr>
 
-</body>
+            <!-- FOOTER -->
+            <tr>
+              <td
+                align="center"
+                style="padding: 20px; font-size: 12px; color: #888"
+              >
+                © 2026 Cittilenz • All rights reserved
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
 </html>
