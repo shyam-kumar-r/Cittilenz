@@ -31,10 +31,19 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                   HttpServletResponse response,
-                                   FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        String path = request.getServletPath();
+
+        // Skip actuator endpoints completely
+        if (path.startsWith("/actuator")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         final String authHeader = request.getHeader("Authorization");
 
@@ -42,6 +51,7 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
             token = authHeader.substring(7);
 
             try {

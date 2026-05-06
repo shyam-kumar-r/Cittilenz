@@ -50,9 +50,7 @@ public class SecurityConfig {
                  * =========================================
                  */
 
-                .requestMatchers(
-                        "/actuator/health"
-                ).permitAll()
+            	.requestMatchers("/actuator/**").permitAll()
 
                 .requestMatchers(
                         "/auth/login",
