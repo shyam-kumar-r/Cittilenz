@@ -1,7 +1,9 @@
 package com.civic_reporting.cittilenz.security;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,10 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
 
-    public JwtFilter(JwtUtil jwtUtil,
-                     CustomUserDetailsService userDetailsService) {
+    public JwtFilter(
+            JwtUtil jwtUtil,
+            CustomUserDetailsService userDetailsService
+    ) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
     }
@@ -39,35 +43,76 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-        // Skip actuator endpoints completely
-        if (path.startsWith("/actuator")) {
+        /*
+         * =========================================
+         * SKIP INFRASTRUCTURE ENDPOINTS
+         * =========================================
+         */
+
+        if (
+                path.startsWith("/actuator") ||
+                path.startsWith("/error")
+        ) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
-        final String authHeader = request.getHeader("Authorization");
+        final String authHeader =
+                request.getHeader("Authorization");
 
         String username = null;
         String token = null;
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        /*
+         * =========================================
+         * EXTRACT JWT TOKEN
+         * =========================================
+         */
+
+        if (
+                authHeader != null &&
+                authHeader.startsWith("Bearer ")
+        ) {
 
             token = authHeader.substring(7);
 
             try {
+
                 username = jwtUtil.extractUsername(token);
+
             } catch (Exception ex) {
-                log.warn("Invalid JWT token");
+
+                log.warn(
+                        "Invalid JWT token for request path: {}",
+                        path
+                );
             }
         }
 
-        if (username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+        /*
+         * =========================================
+         * AUTHENTICATE USER
+         * =========================================
+         */
+
+        if (
+                username != null &&
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication() == null
+        ) {
 
             UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(username);
+                    userDetailsService
+                            .loadUserByUsername(username);
 
-            if (jwtUtil.validateToken(token, userDetails.getUsername())) {
+            if (
+                    jwtUtil.validateToken(
+                            token,
+                            userDetails.getUsername()
+                    )
+            ) {
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
@@ -81,7 +126,9 @@ public class JwtFilter extends OncePerRequestFilter {
                                 .buildDetails(request)
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authToken);
             }
         }
 
